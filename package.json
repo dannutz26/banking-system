@@ -1,0 +1,13 @@
+{
+  "name": "banking-system",
+  "version": "1.0.0",
+  "description": "Enterprise Banking System Monorepo",
+  "scripts": {
+    "backend": "cd backend && mvnw.cmd spring-boot:run",
+    "frontend": "cd frontend && npm start",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
