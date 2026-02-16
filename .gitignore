@@ -1,0 +1,40 @@
+# --- Java / Maven / Spring Boot ---
+target/
+*.class
+*.jar
+*.war
+*.ear
+.mvn/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+/backend/target/
+
+# --- React / Node.js ---
+node_modules/
+/frontend/node_modules/
+build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- IDEs (IntelliJ, VS Code) ---
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.classpath
+.project
+.settings/
+bin/
+
+# --- System Files ---
+.DS_Store
+Thumbs.db
