@@ -8,6 +8,9 @@
     "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "autoprefixer": "^10.4.24",
+    "concurrently": "^8.2.2",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18"
   }
 }
