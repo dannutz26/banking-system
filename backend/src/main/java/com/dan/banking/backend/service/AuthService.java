@@ -30,6 +30,7 @@ public class AuthService {
         user.setLastName(registerRequest.getLastName());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(registerRequest.getPassword());
+        user.setCountryCode(registerRequest.getCountryCode());
 
         userRepository.save(user);
     }

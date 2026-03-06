@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const Register = ( {onSwitch} ) => {
@@ -7,6 +7,20 @@ const Register = ( {onSwitch} ) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
+    const [countryCode, setCountryCode] = useState('');
+
+    useEffect(() => {
+        const fetchLocation = async () => {
+            try {
+                const res = await axios.get('https://api.country.is/');
+                setCountryCode(res.data.country);
+                console.log("Location locked:", res.data.country);
+            } catch (err) {
+                console.error("Location API down");
+            }
+        };
+        fetchLocation().catch(console.error);;
+    }, []);
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -15,9 +29,11 @@ const Register = ( {onSwitch} ) => {
                 firstName,
                 lastName,
                 email,
-                password
+                password,
+                countryCode
             });
             setMessage("User Created! Welcome.");
+            onSwitch();
             console.log(response.data);
         } catch (error) {
             const serverMessage = error.response?.data || "Register Failed.";

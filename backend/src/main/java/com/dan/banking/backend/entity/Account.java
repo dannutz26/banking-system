@@ -8,8 +8,6 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "accounts")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -17,14 +15,12 @@ public class Account {
 
     @Column(unique = true)
     private String iban;
-
     private double balance = 0.0;
-
     private String currency;
-
     private boolean active = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private User owner;
 }

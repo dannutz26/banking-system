@@ -25,6 +25,9 @@ public class User {
     private String email;
     private String password;
 
+    @Column(name = "country_code", length = 2)
+    private String countryCode;
+
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
     private List<Account> accounts;
 }

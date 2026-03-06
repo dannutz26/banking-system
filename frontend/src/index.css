@@ -91,7 +91,7 @@ body {
 
 .register-button {
     width: 100%;
-    background-color: #059669;
+    background-color: #2563eb;
     color: white;
     padding: 12px;
     border: none;
@@ -103,7 +103,7 @@ body {
 }
 
 .register-button:hover {
-    background-color: #047857;
+    background-color: #1d4ed8;
 }
 
 .link-button {

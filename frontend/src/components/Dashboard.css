@@ -1,0 +1,116 @@
+/* Dashboard.css */
+.dashboard-container {
+    padding: 40px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    max-width: 1100px;
+    margin: 0 auto;
+    color: #333;
+}
+
+.dashboard-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+}
+
+.brand-name {
+    color: #2563eb; /* Banking Blue */
+    font-weight: 800;
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.logout-btn {
+    padding: 8px 20px;
+    background-color: #fee2e2;
+    color: #dc2626;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.logout-btn:hover {
+    background-color: #fecaca;
+}
+
+.welcome-section h1 {
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.user-email {
+    color: #64748b;
+    margin-bottom: 30px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.stat-card {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid #f1f5f9;
+}
+
+.balance-amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 10px 0;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 12px;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.action-btn.secondary {
+    background-color: #f1f5f9;
+    color: #475569;
+}
+
+.transaction-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.transaction-table th {
+    text-align: left;
+    padding: 16px;
+    background: #f8fafc;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.transaction-table td {
+    padding: 16px;
+    border-top: 1px solid #f1f5f9;
+}
+
+.amount-negative { color: #dc2626; font-weight: 600; }
+.amount-positive { color: #16a34a; font-weight: 600; }

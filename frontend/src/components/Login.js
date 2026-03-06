@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
-const Login = ({ onSwitch }) => {
+const Login = ({ onSwitch, onLoginSuccess }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
@@ -9,12 +9,13 @@ const Login = ({ onSwitch }) => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:8080/api/auth/login', {
+            await axios.post('http://localhost:8080/api/auth/login', {
                 email,
                 password
             });
-            setMessage("Login Successful! Welcome back.");
-            console.log(response.data);
+
+            onLoginSuccess({ email: email });
+
         } catch (error) {
             setMessage("Login Failed. Check your credentials.");
         }
