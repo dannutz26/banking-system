@@ -2,10 +2,14 @@ package com.dan.banking.backend.controller;
 
 import com.dan.banking.backend.dto.AccountRequest;
 import com.dan.banking.backend.dto.AccountResponse;
+import com.dan.banking.backend.dto.TransferRequest;
 import com.dan.banking.backend.dto.UserResponse;
 import com.dan.banking.backend.entity.Account;
+import com.dan.banking.backend.entity.Transaction;
 import com.dan.banking.backend.entity.User;
+import com.dan.banking.backend.entity.UserSettings;
 import com.dan.banking.backend.service.AccountService;
+import com.dan.banking.backend.service.CurrencyService;
 import com.dan.banking.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,30 +18,36 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api/dashboard")
 @RequiredArgsConstructor
 public class DashboardController {
     private final UserService userService;
     private final AccountService accountService;
+    private final CurrencyService currencyService;
 
     @GetMapping("/user-data")
     public ResponseEntity<?> getUserData(@RequestParam String email) {
-        Optional<User> userOpt = userService.getUserByEmail(email);
+        User user = userService.getUserByEmail(email).orElseThrow();
+        UserSettings settings = user.getSettings();
+        List<Account> accounts = accountService.getAccounts(email);
 
-        if (userOpt.isPresent()) {
-            User user = userOpt.get();
-            UserResponse response = new com.dan.banking.backend.dto.UserResponse(
-                    user.getId(),
-                    user.getFirstName(),
-                    user.getLastName(),
-                    user.getEmail()
-            );
-            return ResponseEntity.ok(response);
-        } else {
-            return ResponseEntity.status(404).body("User not found");
-        }
+        String targetCurr = (settings != null) ? settings.getPreferredCurrency() : "EUR";
+
+        double totalNetWorth = accounts.stream()
+                .mapToDouble(acc -> {
+                    if (acc.getCurrency().equals(targetCurr)) return acc.getBalance();
+                    return acc.getBalance() * currencyService.getExchangeRate(acc.getCurrency(), targetCurr);
+                })
+                .sum();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("firstName", user.getFirstName());
+        response.put("totalNetWorth", totalNetWorth);
+        response.put("preferredCurrency", targetCurr);
+        response.put("primaryIban", settings != null ? settings.getPrimaryAccountIban() : null);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/user-accounts")
@@ -74,5 +84,25 @@ public class DashboardController {
                 .toList();
 
         return ResponseEntity.ok(currencies);
+    }
+
+    @PostMapping("/transfer")
+    public ResponseEntity<?> transferMoney(@RequestBody TransferRequest request) {
+        try {
+            accountService.transferMoney(request);
+            return ResponseEntity.ok("Transfer completed successfully!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/transactions")
+    public ResponseEntity<?> getTransactions(@RequestParam String email) {
+        try {
+            List<Transaction> transactions = accountService.getAllTransactionsForUser(email);
+            return ResponseEntity.ok(transactions);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Could not fetch transactions");
+        }
     }
 }

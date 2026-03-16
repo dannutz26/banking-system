@@ -59,7 +59,11 @@ const CreateAccount = ({ email, onCancel, onCreateAccountSuccess }) => {
                 </div>
 
                 <button type="submit" className="register-button">Open Account</button>
-                <button type="button" className="link-button" onClick={onCancel}>Go Back</button>
+                <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                    <button type="button" className="link-button" onClick={onCancel} style={{ width: '100%' }}>
+                        Go Back
+                    </button>
+                </div>
                 {message && <p className={`message ${message.includes('failed') ? 'error' : 'success'}`}>{message}</p>}
             </form>
         </div>

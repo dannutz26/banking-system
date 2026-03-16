@@ -1,5 +1,6 @@
 package com.dan.banking.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import lombok.Data;
@@ -30,4 +31,8 @@ public class User {
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL)
     private List<Account> accounts;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private UserSettings settings;
 }

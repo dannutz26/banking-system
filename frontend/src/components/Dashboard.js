@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 import CreateAccount from "./CreateAccount";
+import TransferMoney from "./TransferMoney";
+import Settings from "./Settings";
+import axios from 'axios';
 
 const Dashboard = ({ email, onLogout }) => {
     const [userData, setUserData] = useState(null);
     const [accounts, setAccounts] = useState([]);
+    const [transactions, setTransactions] = useState([]); // New state for history
     const [view, setView] = useState('main');
     const [loading, setLoading] = useState(true);
 
@@ -18,8 +22,13 @@ const Dashboard = ({ email, onLogout }) => {
             const accountsDataJson = await accountsRes.json();
             setAccounts(accountsDataJson);
 
+            const transRes = await fetch(`http://localhost:8080/api/dashboard/transactions?email=${email}`);
+            const transDataJson = await transRes.json();
+            setTransactions(transDataJson);
+
             setLoading(false);
         } catch (err) {
+            console.error("Error loading dashboard:", err);
             setLoading(false);
         }
     };
@@ -30,91 +39,131 @@ const Dashboard = ({ email, onLogout }) => {
         }
     }, [email]);
 
-    if (view === 'create') {
-        return (
-            <CreateAccount
-                email={email}
-                onCancel={() => setView('main')}
-                onCreateAccountSuccess={() => {
-                    setView('main'); // Go back
-                    loadDashboardData(); // Refresh the list to show the new IBAN!
-                }}
-            />
-        );
-    }
+    const handleSaveSettings = async (prefCurrency, primaryIban) => {
+        try {
+            await axios.post(`http://localhost:8080/api/settings/update?email=${encodeURIComponent(email)}`, {
+                preferredCurrency: prefCurrency,
+                primaryAccountIban: primaryIban,
+                darkMode: false
+            });
+
+            setView('main');
+            loadDashboardData();
+        } catch (err) {
+            console.error("Save error:", err);
+            alert("Failed to save settings");
+        }
+    };
+
+    if (view === 'create') return <CreateAccount email={email} onCancel={() => setView('main')} onCreateAccountSuccess={() => { setView('main'); loadDashboardData(); }} />;
+    if (view === 'transfer') return <TransferMoney email={email} accounts={accounts} onCancel={() => setView('main')} onTransferSuccess={() => { setView('main'); loadDashboardData(); }} />;
+    if (view === 'settings') return <Settings email={email} accounts={accounts} currentPrefs={{ currency: userData?.preferredCurrency, primaryIban: userData?.primaryIban }} onSave={handleSaveSettings} onCancel={() => setView('main')} />;
 
     if (loading) return <div className="dashboard-container">Connecting to secure servers...</div>;
-
-    const totalBalance = accounts.reduce((acc, curr) => acc + curr.balance, 0);
-
-    const mainAccount = accounts.length > 0 ? accounts[0] : null;
 
     return (
         <div className="dashboard-container">
             <nav className="dashboard-nav">
                 <h2 className="brand-name">DAN BANK</h2>
-                <button className="logout-btn" onClick={onLogout}>Logout</button>
+                <div className="nav-actions" style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+                    <button className="settings-icon-btn" onClick={() => setView('settings')} title="Settings">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </button>
+                    <button className="logout-btn" onClick={onLogout}>Logout</button>
+                </div>
             </nav>
 
             <header className="welcome-section">
                 <h1>Hello, {userData?.firstName || 'User'}!</h1>
-                <p />
             </header>
 
             <div className="stats-grid">
                 <div className="stat-card">
                     <small>Total Net Worth</small>
                     <h2 className="balance-amount">
-                        {totalBalance.toLocaleString('ro-RO', { style: 'currency', currency: mainAccount?.currency || 'RON' })}
+                        {userData?.totalNetWorth?.toLocaleString('en-US', {
+                            style: 'currency',
+                            currency: userData?.preferredCurrency || 'EUR'
+                        })}
                     </h2>
-                    <p style={{color: '#64748b'}}>
-                        {mainAccount ? `Primary IBAN: ${mainAccount.iban}` : "No accounts found"}
+                    <p style={{color: '#64748b', fontSize: '0.85rem'}}>
+                        {userData?.primaryIban ? `Primary IBAN: ${userData.primaryIban}` : "Primary account not set"}
                     </p>
                 </div>
 
                 <div className="stat-card">
                     <h3>Quick Actions</h3>
-                    <div className="action-buttons">
-                        <button
-                            className="action-btn"
-                            onClick={() => setView('create')}
-                        >
-                            New Account
-                        </button>
-                        <button className="action-btn secondary">Transfer</button>
+                    <div className="action-buttons" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <button className="action-btn" onClick={() => setView('create')}>New Account</button>
+                        <button className="action-btn secondary" onClick={() => setView('transfer')}>Transfer</button>
                     </div>
                 </div>
             </div>
 
-            <section className="transactions-section">
-                <h3>Your Accounts</h3>
-                <table className="transaction-table">
-                    <thead>
-                    <tr>
-                        <th>IBAN</th>
-                        <th>Currency</th>
-                        <th>Balance</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {accounts.length > 0 ? (
-                        accounts.map((acc) => (
-                            <tr key={acc.iban}>
-                                <td>{acc.iban}</td>
-                                <td>{acc.currency}</td>
-                                <td className="amount-positive">
-                                    {acc.balance.toFixed(2)}
-                                </td>
-                            </tr>
-                        ))
-                    ) : (
+            <div className="dashboard-content-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '20px', marginTop: '30px' }}>
+                {/* ACCOUNTS TABLE */}
+                <section className="transactions-section">
+                    <h3>Your Accounts</h3>
+                    <table className="transaction-table">
+                        <thead>
                         <tr>
-                            <td colSpan="3" style={{textAlign: 'center'}}>No accounts linked to this profile.</td>
+                            <th>IBAN</th>
+                            <th>Currency</th>
+                            <th>Balance</th>
                         </tr>
-                    )}
-                    </tbody>
-                </table>
-            </section>
+                        </thead>
+                        <tbody>
+                        {accounts.map((acc) => (
+                            <tr key={acc.iban} className={acc.iban === userData?.primaryIban ? "primary-row" : ""}>
+                                <td style={{fontSize: '0.8rem'}}>{acc.iban}</td>
+                                <td>{acc.currency}</td>
+                                <td className="amount-positive">{acc.balance.toFixed(2)}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </section>
+
+                {/* TRANSFER HISTORY TABLE */}
+                <section className="transactions-section">
+                    <h3>Recent Activity</h3>
+                    <div className="history-table-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                        <table className="transaction-table">
+                            <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Amount</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {transactions.length > 0 ? (
+                                transactions.map((tx) => (
+                                    <tr key={tx.id}>
+                                        <td style={{fontSize: '0.7rem', color: '#64748b'}}>
+                                            {new Date(tx.timestamp).toLocaleDateString()}
+                                        </td>
+                                        <td style={{fontSize: '0.8rem'}}>{tx.description}</td>
+                                        <td className={tx.amount < 0 ? "amount-negative" : "amount-positive"}>
+                                            {tx.amount > 0 ? `+${tx.amount.toFixed(2)}` : tx.amount.toFixed(2)} {tx.currency}
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="3" style={{textAlign: 'center', padding: '20px', color: '#94a3b8'}}>
+                                        No transactions yet.
+                                    </td>
+                                </tr>
+                            )}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
         </div>
     );
 };

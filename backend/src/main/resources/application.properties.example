@@ -9,4 +9,4 @@ spring.jpa.show-sql=true
 spring.jpa.open-in-view=false
 
 # Currency API
-currencyapi.api.key=cur_live_aEg3LcnsnSxOgeo7I6KE5ZycyXcjw1xObm6Bplqb
+currencyapi.api.key=REPLACE_WITH_YOUR_ACTUAL_KEY

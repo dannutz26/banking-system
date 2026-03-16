@@ -38,3 +38,8 @@ bin/
 # --- System Files ---
 .DS_Store
 Thumbs.db
+
+# --- Config ---
+src/main/resources/application.properties
+src/main/resources/application-local.properties
+*.log
