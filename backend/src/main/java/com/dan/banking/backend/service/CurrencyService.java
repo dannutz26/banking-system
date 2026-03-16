@@ -3,6 +3,8 @@ package com.dan.banking.backend.service;
 import com.dan.banking.backend.entity.ExchangeRate;
 import com.dan.banking.backend.repository.ExchangeRateRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -16,6 +18,7 @@ public class CurrencyService {
 
     private final ExchangeRateRepository rateRepository;
     private final RestTemplate restTemplate = new RestTemplate();
+    private static final Logger logger = LoggerFactory.getLogger(CurrencyService.class);
 
     @Value("${currencyapi.api.key}")
     private String apiKey;
@@ -27,17 +30,15 @@ public class CurrencyService {
 
         String fromBase = from.toUpperCase();
         String toTarget = to.toUpperCase();
-
-        /*
-        if (shouldRefreshCache(fromBase, toTarget)) {
-            refreshAllRatesFromAPI();
-        }
-         */
+        logger.info("Calculating exchange rate: {} -> {}", fromBase, toTarget);
 
         double rateFrom = getRateFromDb(fromBase);
         double rateTo = getRateFromDb(toTarget);
 
-        return rateTo / rateFrom;
+        double result = rateTo / rateFrom;
+        logger.debug("Final rate for {}/{}: {}", fromBase, toTarget, result);
+
+        return result;
     }
 
     private boolean shouldRefreshCache(String from, String to) {
