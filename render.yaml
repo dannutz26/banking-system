@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: banking-system-backend
+    runtime: java
+    rootDir: backend
+    buildCommand: chmod +x ./mvnw && ./mvnw package -DskipTests
+    startCommand: java -jar target/*.jar
+    envVars:
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: CURRENCY_API_KEY
+        sync: false
