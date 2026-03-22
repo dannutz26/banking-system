@@ -20,7 +20,7 @@ public class AuthService {
     private final AuditLogRepository auditLogRepository;
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
-    @Transactional(readOnly = true)
+    @Transactional
     public boolean verifyLogin(LoginRequest loginRequest) {
         logger.info("Login attempt for email: {}", loginRequest.getEmail());
         boolean isSuccess = userRepository.findByEmail(loginRequest.getEmail())

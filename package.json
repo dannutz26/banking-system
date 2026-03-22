@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Enterprise Banking System Monorepo",
   "scripts": {
-    "backend": "cd backend && mvnw.cmd spring-boot:run",
+    "backend": "cd backend && mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local",
     "frontend": "cd frontend && npm start",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },

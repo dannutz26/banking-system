@@ -98,7 +98,7 @@ const Dashboard = ({ email, onLogout }) => {
                     <h3>Quick Actions</h3>
                     <div className="action-buttons" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                         <button className="action-btn" onClick={() => setView('create')}>New Account</button>
-                        <button className="action-btn secondary" onClick={() => setView('transfer')}>Transfer</button>
+                        <button className="action-btn" onClick={() => setView('transfer')}>Transfer</button>
                     </div>
                 </div>
             </div>

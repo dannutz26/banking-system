@@ -9,10 +9,12 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**") // Allow all endpoints
-                .allowedOrigins("http://localhost:3000") // Allow React
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // Allow all methods
-                .allowedHeaders("*") // Allow all headers
-                .allowCredentials(true);
+        registry.addMapping("/**")
+                // We add 5173 (Vite default) and 3000 (Create React App default)
+                .allowedOrigins("http://localhost:5173", "http://localhost:3000")
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true)
+                .maxAge(3600); // Cache the CORS response for 1 hour for better performance
     }
 }
