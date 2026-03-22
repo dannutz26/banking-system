@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import API_BASE_URL from '../config';
 
 const Register = ( {onSwitch} ) => {
     const [firstName, setFirstName] = useState('');
@@ -25,13 +26,14 @@ const Register = ( {onSwitch} ) => {
     const handleRegister = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post('http://localhost:8080/api/auth/register', {
+            const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
                 firstName,
                 lastName,
                 email,
                 password,
                 countryCode
             });
+            setMessage("User Created! Welcome.");
             setMessage("User Created! Welcome.");
             onSwitch();
             console.log(response.data);

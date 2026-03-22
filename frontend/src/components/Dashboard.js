@@ -4,6 +4,7 @@ import CreateAccount from "./CreateAccount";
 import TransferMoney from "./TransferMoney";
 import Settings from "./Settings";
 import axios from 'axios';
+import API_BASE_URL from '../config';
 
 const Dashboard = ({ email, onLogout }) => {
     const [userData, setUserData] = useState(null);
@@ -14,15 +15,15 @@ const Dashboard = ({ email, onLogout }) => {
 
     const loadDashboardData = async () => {
         try {
-            const userRes = await fetch(`http://localhost:8080/api/dashboard/user-data?email=${email}`);
+            const userRes = await fetch(`${API_BASE_URL}/api/dashboard/user-data?email=${email}`);
             const userDataJson = await userRes.json();
             setUserData(userDataJson);
 
-            const accountsRes = await fetch(`http://localhost:8080/api/dashboard/user-accounts?email=${email}`);
+            const accountsRes = await fetch(`${API_BASE_URL}/api/dashboard/user-accounts?email=${email}`);
             const accountsDataJson = await accountsRes.json();
             setAccounts(accountsDataJson);
 
-            const transRes = await fetch(`http://localhost:8080/api/dashboard/transactions?email=${email}`);
+            const transRes = await fetch(`${API_BASE_URL}/api/dashboard/transactions?email=${email}`);
             const transDataJson = await transRes.json();
             setTransactions(transDataJson);
 
@@ -41,7 +42,7 @@ const Dashboard = ({ email, onLogout }) => {
 
     const handleSaveSettings = async (prefCurrency, primaryIban) => {
         try {
-            await axios.post(`http://localhost:8080/api/settings/update?email=${encodeURIComponent(email)}`, {
+            await axios.post(`${API_BASE_URL}/api/settings/update?email=${encodeURIComponent(email)}`, {
                 preferredCurrency: prefCurrency,
                 primaryAccountIban: primaryIban,
                 darkMode: false

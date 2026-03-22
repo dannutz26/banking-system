@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import './Dashboard.css';
+import API_BASE_URL from '../config';
 
 const TransferMoney = ({ email, accounts, onCancel, onTransferSuccess }) => {
     const [fromIban, setFromIban] = useState(accounts[0]?.iban || '');
@@ -19,7 +20,7 @@ const TransferMoney = ({ email, accounts, onCancel, onTransferSuccess }) => {
                 ownerEmail: email
             };
 
-            await axios.post('http://localhost:8080/api/dashboard/transfer', payload);
+            await axios.post(`${API_BASE_URL}/api/dashboard/transfer`, payload);
             setMessage("Transfer Successful!");
             setTimeout(() => onTransferSuccess(), 1500);
         } catch (error) {

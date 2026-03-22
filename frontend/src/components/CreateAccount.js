@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Dashboard.css';
+import API_BASE_URL from '../config';
 
 const CreateAccount = ({ email, onCancel, onCreateAccountSuccess }) => {
     const [currency, setCurrency] = useState('RON');
@@ -11,7 +12,7 @@ const CreateAccount = ({ email, onCancel, onCreateAccountSuccess }) => {
     useEffect(() => {
         const fetchCurrencies = async () => {
             try {
-                const res = await axios.get('http://localhost:8080/api/dashboard/currencies');
+                const res = await axios.get(`${API_BASE_URL}/api/dashboard/currencies`);
                 setAvailableCurrencies(res.data);
             } catch (err) {
                 console.error("Failed to load currencies, falling back to defaults");
@@ -29,7 +30,7 @@ const CreateAccount = ({ email, onCancel, onCreateAccountSuccess }) => {
                 currency: currency,
                 ownerEmail: email
             };
-            await axios.post('http://localhost:8080/api/dashboard/create-account', payload);
+            await axios.post(`${API_BASE_URL}/api/dashboard/create-account`, payload);
             setMessage("Account created successfully!");
             setTimeout(() => onCreateAccountSuccess(), 1000);
         } catch (error) {
