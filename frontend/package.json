@@ -18,7 +18,7 @@
   },
   "scripts": {
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build --repo https://github.com/dannutz26/banking-system.git",
+    "deploy": "gh-pages -d build --repo https://x-access-token:${GH_TOKEN}@github.com/dannutz26/banking-system.git",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
