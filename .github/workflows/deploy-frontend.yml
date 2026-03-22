@@ -27,3 +27,4 @@ jobs:
         env:
           REACT_APP_API_URL: https://banking-system-backend-9t9y.onrender.com
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CI: false
