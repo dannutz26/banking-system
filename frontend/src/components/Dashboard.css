@@ -9,9 +9,12 @@
 
 .dashboard-nav {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    margin-bottom: 40px;
+    justify-content: space-between;
+    padding: 0 40px;
+    background-color: #ffffff;
+    border-bottom: 1px solid #e2e8f0;
+    box-sizing: border-box;
 }
 
 .brand-name {

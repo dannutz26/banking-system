@@ -9,7 +9,7 @@ import API_BASE_URL from '../config';
 const Dashboard = ({ email, onLogout }) => {
     const [userData, setUserData] = useState(null);
     const [accounts, setAccounts] = useState([]);
-    const [transactions, setTransactions] = useState([]); // New state for history
+    const [transactions, setTransactions] = useState([]);
     const [view, setView] = useState('main');
     const [loading, setLoading] = useState(true);
 
@@ -58,7 +58,7 @@ const Dashboard = ({ email, onLogout }) => {
 
     if (view === 'create') return <CreateAccount email={email} onCancel={() => setView('main')} onCreateAccountSuccess={() => { setView('main'); loadDashboardData(); }} />;
     if (view === 'transfer') return <TransferMoney email={email} accounts={accounts} onCancel={() => setView('main')} onTransferSuccess={() => { setView('main'); loadDashboardData(); }} />;
-    if (view === 'settings') return <Settings email={email} accounts={accounts} currentPrefs={{ currency: userData?.preferredCurrency, primaryIban: userData?.primaryIban }} onSave={handleSaveSettings} onCancel={() => setView('main')} />;
+    if (view === 'settings') return <Settings email={email} accounts={accounts} currentPrefs={{ currency: userData?.preferredCurrency, primaryIban: userData?.primaryIban }} onSave={handleSaveSettings} onCancel={() => setView('main')} onLogout={onLogout}/>;
 
     if (loading) return <div className="dashboard-container">Connecting to secure servers...</div>;
 
