@@ -54,7 +54,7 @@ public class DashboardController {
         List<Account> accountList = accountService.getAccounts(email);
 
         List<AccountResponse> response = accountList.stream()
-                .map(acc -> new AccountResponse(acc.getIban(), acc.getBalance(), acc.getCurrency()))
+                .map(acc -> new AccountResponse(acc.getId(), acc.getIban(), acc.getBalance(), acc.getCurrency()))
                 .toList();
 
         return ResponseEntity.ok(response);
@@ -116,16 +116,31 @@ public class DashboardController {
     }
 
     @GetMapping("/cards")
-    public ResponseEntity<List<Card>> getCards(@RequestParam String email) {
+    public ResponseEntity<?> getCards(@RequestParam String email) {
         return ResponseEntity.ok(cardService.getCardsByEmail(email));
     }
 
     @PostMapping("/cards/create")
-    public ResponseEntity<?> issueCard(@RequestParam String iban, @RequestParam String type) {
+    public ResponseEntity<?> createCard(@RequestParam String iban, @RequestParam String type, @RequestParam boolean disposable) {
         try {
-            Card card = cardService.createCard(iban, type);
-            return ResponseEntity.ok(card);
-        } catch (RuntimeException e) {
+            return ResponseEntity.ok(cardService.createCard(iban, type, disposable));
+        } catch (Exception e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/cards/toggle-block")
+    public ResponseEntity<?> toggleBlock(@RequestParam Long cardId) {
+        cardService.toggleBlock(cardId);
+        return ResponseEntity.ok("Success");
+    }
+
+    @DeleteMapping("/cards/delete")
+    public ResponseEntity<?> deleteCard(@RequestParam Long cardId) {
+        try {
+            cardService.deleteCard(cardId);
+            return ResponseEntity.ok("Card cancelled successfully");
+        } catch (Exception e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
     }

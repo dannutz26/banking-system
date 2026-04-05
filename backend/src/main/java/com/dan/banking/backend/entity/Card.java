@@ -3,7 +3,6 @@ package com.dan.banking.backend.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDate;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "cards")
@@ -29,10 +28,11 @@ public class Card {
     private String cardType;
 
     @Column(name = "is_blocked")
-    private boolean isBlocked = false;
+    private boolean blocked = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id")
-    @JsonIgnore
-    private Account account;
+    @Column(name = "is_disposable")
+    private boolean disposable = false;
+
+    @Column(name = "account_id")
+    private Long accountId;
 }
