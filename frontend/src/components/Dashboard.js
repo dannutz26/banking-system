@@ -3,6 +3,7 @@ import './Dashboard.css';
 import CreateAccount from "./CreateAccount";
 import TransferMoney from "./TransferMoney";
 import Settings from "./Settings";
+import DepositMoney from "./DepositMoney";
 import axios from 'axios';
 import API_BASE_URL from '../config';
 
@@ -59,6 +60,7 @@ const Dashboard = ({ email, onLogout }) => {
     if (view === 'create') return <CreateAccount email={email} onCancel={() => setView('main')} onCreateAccountSuccess={() => { setView('main'); loadDashboardData(); }} />;
     if (view === 'transfer') return <TransferMoney email={email} accounts={accounts} onCancel={() => setView('main')} onTransferSuccess={() => { setView('main'); loadDashboardData(); }} />;
     if (view === 'settings') return <Settings email={email} accounts={accounts} currentPrefs={{ currency: userData?.preferredCurrency, primaryIban: userData?.primaryIban }} onSave={handleSaveSettings} onCancel={() => setView('main')} onLogout={onLogout}/>;
+    if (view === 'deposit') return <DepositMoney email={email} accounts={accounts} onCancel={() => setView('main')} onSuccess={() => { setView('main'); loadDashboardData(); }} />;
 
     if (loading) return <div className="dashboard-container">Connecting to secure servers...</div>;
 
@@ -82,17 +84,20 @@ const Dashboard = ({ email, onLogout }) => {
             </header>
 
             <div className="stats-grid">
-                <div className="stat-card">
-                    <small>Total Net Worth</small>
-                    <h2 className="balance-amount">
-                        {userData?.totalNetWorth?.toLocaleString('en-US', {
-                            style: 'currency',
-                            currency: userData?.preferredCurrency || 'EUR'
-                        })}
-                    </h2>
-                    <p style={{color: '#64748b', fontSize: '0.85rem'}}>
-                        {userData?.primaryIban ? `Primary IBAN: ${userData.primaryIban}` : "Primary account not set"}
-                    </p>
+                <div className="stat-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px' }}>
+                    <div style={{ flex: 1 }}>
+                        <small style={{ color: '#64748b', fontWeight: '500' }}>Total Net Worth</small>
+                        <h2 className="balance-amount" style={{ margin: '5px 0' }}>
+                            {userData?.totalNetWorth?.toLocaleString('en-US', {
+                                style: 'currency',
+                                currency: userData?.preferredCurrency || 'EUR'
+                            })}
+                        </h2>
+                        <p style={{ color: '#64748b', fontSize: '0.85rem' }}>
+                            {userData?.primaryIban ? `Primary IBAN: ${userData.primaryIban}` : "Primary account not set"}
+                        </p>
+                    </div>
+                    <button className="deposit-circle-btn" onClick={() => setView('deposit')}>+</button>
                 </div>
 
                 <div className="stat-card">
@@ -105,7 +110,6 @@ const Dashboard = ({ email, onLogout }) => {
             </div>
 
             <div className="dashboard-content-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '20px', marginTop: '30px' }}>
-                {/* ACCOUNTS TABLE */}
                 <section className="transactions-section">
                     <h3>Your Accounts</h3>
                     <table className="transaction-table">
@@ -128,7 +132,6 @@ const Dashboard = ({ email, onLogout }) => {
                     </table>
                 </section>
 
-                {/* TRANSFER HISTORY TABLE */}
                 <section className="transactions-section">
                     <h3>Recent Activity</h3>
                     <div className="history-table-container" style={{ maxHeight: '400px', overflowY: 'auto' }}>

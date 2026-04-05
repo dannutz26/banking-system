@@ -105,4 +105,14 @@ public class DashboardController {
             return ResponseEntity.status(500).body("Could not fetch transactions");
         }
     }
+
+    @PostMapping("/deposit")
+    public ResponseEntity<?> depositMoney(@RequestBody com.dan.banking.backend.dto.DepositRequest request) {
+        try {
+            accountService.depositMoney(request.getIban(), request.getAmount());
+            return ResponseEntity.ok("Deposit completed successfully!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
 }

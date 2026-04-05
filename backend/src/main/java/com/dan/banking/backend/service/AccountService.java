@@ -190,4 +190,24 @@ public class AccountService {
 
         return transactionRepository.findByAccountInOrderByTimestampDesc(userAccounts);
     }
+
+    @Transactional
+    public void depositMoney(String iban, Double amount) {
+        Account account = accountRepository.findByIban(iban)
+                .orElseThrow(() -> new RuntimeException("Account not found"));
+
+        account.setBalance(account.getBalance() + amount);
+        accountRepository.save(account);
+
+        Transaction depositTx = new Transaction();
+        depositTx.setAccount(account);
+        depositTx.setAmount(amount);
+        depositTx.setCurrency(account.getCurrency());
+        depositTx.setDescription("Cash Deposit");
+        depositTx.setSourceIban("ATM-DEPOSIT");
+        depositTx.setTargetIban(iban);
+        depositTx.setTimestamp(java.time.LocalDateTime.now());
+
+        transactionRepository.save(depositTx);
+    }
 }

@@ -188,3 +188,32 @@
     background-color: #f8fafc;
     font-weight: 500;
 }
+
+.deposit-circle-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+    flex-shrink: 0;
+}
+
+.deposit-circle-btn:hover {
+    background-color: #1d4ed8;
+    transform: scale(1.05);
+}
+
+.deposit-circle-btn:active {
+    transform: scale(0.95);
+}
