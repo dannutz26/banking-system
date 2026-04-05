@@ -217,3 +217,28 @@
 .deposit-circle-btn:active {
     transform: scale(0.95);
 }
+
+.cards-circle-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.cards-circle-btn:hover {
+    background-color: #e2e8f0;
+    color: #1e293b;
+    transform: scale(1.05);
+}
+
+.cards-circle-btn:active {
+    transform: scale(0.95);
+}

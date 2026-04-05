@@ -4,6 +4,7 @@ import CreateAccount from "./CreateAccount";
 import TransferMoney from "./TransferMoney";
 import Settings from "./Settings";
 import DepositMoney from "./DepositMoney";
+import CardsView from "./CardsView";
 import axios from 'axios';
 import API_BASE_URL from '../config';
 
@@ -61,6 +62,7 @@ const Dashboard = ({ email, onLogout }) => {
     if (view === 'transfer') return <TransferMoney email={email} accounts={accounts} onCancel={() => setView('main')} onTransferSuccess={() => { setView('main'); loadDashboardData(); }} />;
     if (view === 'settings') return <Settings email={email} accounts={accounts} currentPrefs={{ currency: userData?.preferredCurrency, primaryIban: userData?.primaryIban }} onSave={handleSaveSettings} onCancel={() => setView('main')} onLogout={onLogout}/>;
     if (view === 'deposit') return <DepositMoney email={email} accounts={accounts} onCancel={() => setView('main')} onSuccess={() => { setView('main'); loadDashboardData(); }} />;
+    if (view === 'cards') return <CardsView email={email} accounts={accounts} onCancel={() => setView('main')} />;
 
     if (loading) return <div className="dashboard-container">Connecting to secure servers...</div>;
 
@@ -97,7 +99,15 @@ const Dashboard = ({ email, onLogout }) => {
                             {userData?.primaryIban ? `Primary IBAN: ${userData.primaryIban}` : "Primary account not set"}
                         </p>
                     </div>
-                    <button className="deposit-circle-btn" onClick={() => setView('deposit')}>+</button>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button className="cards-circle-btn" onClick={() => setView('cards')} title="My Cards">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="2" y="5" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="2" y1="10" x2="22" y2="10"></line>
+                            </svg>
+                        </button>
+                        <button className="deposit-circle-btn" onClick={() => setView('deposit')} title="Deposit Money">+</button>
+                    </div>
                 </div>
 
                 <div className="stat-card">

@@ -4,11 +4,9 @@ import com.dan.banking.backend.dto.AccountRequest;
 import com.dan.banking.backend.dto.AccountResponse;
 import com.dan.banking.backend.dto.TransferRequest;
 import com.dan.banking.backend.dto.UserResponse;
-import com.dan.banking.backend.entity.Account;
-import com.dan.banking.backend.entity.Transaction;
-import com.dan.banking.backend.entity.User;
-import com.dan.banking.backend.entity.UserSettings;
+import com.dan.banking.backend.entity.*;
 import com.dan.banking.backend.service.AccountService;
+import com.dan.banking.backend.service.CardService;
 import com.dan.banking.backend.service.CurrencyService;
 import com.dan.banking.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +23,7 @@ public class DashboardController {
     private final UserService userService;
     private final AccountService accountService;
     private final CurrencyService currencyService;
+    private final CardService cardService;
 
     @GetMapping("/user-data")
     public ResponseEntity<?> getUserData(@RequestParam String email) {
@@ -111,6 +110,21 @@ public class DashboardController {
         try {
             accountService.depositMoney(request.getIban(), request.getAmount());
             return ResponseEntity.ok("Deposit completed successfully!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/cards")
+    public ResponseEntity<List<Card>> getCards(@RequestParam String email) {
+        return ResponseEntity.ok(cardService.getCardsByEmail(email));
+    }
+
+    @PostMapping("/cards/create")
+    public ResponseEntity<?> issueCard(@RequestParam String iban, @RequestParam String type) {
+        try {
+            Card card = cardService.createCard(iban, type);
+            return ResponseEntity.ok(card);
         } catch (RuntimeException e) {
             return ResponseEntity.status(400).body(e.getMessage());
         }
