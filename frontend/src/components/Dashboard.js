@@ -131,13 +131,21 @@ const Dashboard = ({ email, onLogout }) => {
                         </tr>
                         </thead>
                         <tbody>
-                        {accounts.map((acc) => (
-                            <tr key={acc.iban} className={acc.iban === userData?.primaryIban ? "primary-row" : ""}>
-                                <td style={{fontSize: '0.8rem'}}>{acc.iban}</td>
-                                <td>{acc.currency}</td>
-                                <td className="amount-positive">{acc.balance.toFixed(2)}</td>
+                        {accounts.length > 0 ? (
+                            accounts.map((acc) => (
+                                <tr key={acc.iban} className={acc.iban === userData?.primaryIban ? "primary-row" : ""}>
+                                    <td style={{fontSize: '0.8rem'}}>{acc.iban}</td>
+                                    <td>{acc.currency}</td>
+                                    <td className="amount-positive">{acc.balance.toFixed(2)}</td>
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan="3" style={{textAlign: 'center', padding: '20px', color: '#94a3b8'}}>
+                                    No accounts opened yet.
+                                </td>
                             </tr>
-                        ))}
+                        )}
                         </tbody>
                     </table>
                 </section>

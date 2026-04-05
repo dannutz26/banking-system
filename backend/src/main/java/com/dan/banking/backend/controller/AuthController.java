@@ -2,6 +2,7 @@ package com.dan.banking.backend.controller;
 
 import com.dan.banking.backend.dto.RegisterRequest;
 import com.dan.banking.backend.entity.User;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
@@ -22,27 +23,40 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@Valid @RequestBody LoginRequest loginRequest) {
-        boolean isValid = authService.verifyLogin(loginRequest);
-
-        if (isValid) {
-            return ResponseEntity.ok("Login successful!");
-        } else {
-            return ResponseEntity.status(401).body("Invalid email or password");
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest,
+                                   @RequestParam(defaultValue = "false") boolean rememberMe,
+                                   HttpServletResponse response) {
+        if (authService.verifyLogin(loginRequest)) {
+            if (rememberMe) {
+                authService.createRememberMeToken(loginRequest.getEmail(), response);
+            }
+            return ResponseEntity.ok(loginRequest.getEmail());
         }
+        return ResponseEntity.status(401).body("Invalid email or password");
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        try {
-            authService.registerUser(registerRequest);
-            return ResponseEntity.ok("Register successful!");
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(409).body(e.getMessage());
-        }
+    public ResponseEntity<?> register(@RequestBody RegisterRequest registerRequest) {
+        authService.registerUser(registerRequest);
+        return ResponseEntity.ok("Registration successful");
     }
 
-    public ResponseEntity<String> logout() {
-        return ResponseEntity.ok("Session cleared");
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@CookieValue(name = "remember-me", required = false) String rememberMeCookie,
+                                            HttpServletResponse response) {
+        if (rememberMeCookie == null) {
+            return ResponseEntity.status(401).body("No session found");
+        }
+
+        return authService.processAutoLogin(rememberMeCookie, response)
+                .map(email -> ResponseEntity.ok(email))
+                .orElse(ResponseEntity.status(401).body("Invalid or expired session"));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@CookieValue(name = "remember-me", required = false) String rememberMeCookie,
+                                    HttpServletResponse response) {
+        authService.logout(rememberMeCookie, response);
+        return ResponseEntity.ok("Session cleared successfully");
     }
 }
