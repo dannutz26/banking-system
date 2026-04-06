@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import axios from 'axios';
 import API_BASE_URL from '../config';
 
@@ -8,6 +8,11 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
     const [cardType, setCardType] = useState('VISA');
     const [isDisposable, setIsDisposable] = useState(false);
     const [revealedCardId, setRevealedCardId] = useState(null);
+
+    const [activeMenu, setActiveMenu] = useState(null);
+    const [showLimitForm, setShowLimitForm] = useState(false);
+    const [limitData, setLimitData] = useState({ period: 'DAILY', amount: '', exists: false });
+    const menuRef = useRef(null);
 
     const fetchCards = useCallback(async () => {
         try {
@@ -23,6 +28,69 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
     useEffect(() => {
         if (email) fetchCards();
     }, [email, fetchCards]);
+
+    useEffect(() => {
+        const handleClickOutside = (e) => {
+            if (menuRef.current && !menuRef.current.contains(e.target)) {
+                setActiveMenu(null);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const openMenu = async (e, id, type, isRightClick = false) => {
+        if (isRightClick) e.preventDefault();
+
+        try {
+            const res = await axios.get(`${API_BASE_URL}/api/limits/${type.toLowerCase()}s/${id}`);
+            setLimitData(prev => ({ ...prev, exists: res.data && res.data.length > 0 }));
+        } catch (err) {
+            setLimitData(prev => ({ ...prev, exists: false }));
+        }
+
+        setActiveMenu({ id, type, x: e.clientX, y: e.clientY });
+    };
+
+    const handleSetLimitClick = () => {
+        setShowLimitForm(true);
+    };
+
+    const handleSaveLimit = async () => {
+        if (!limitData.amount || limitData.amount <= 0) {
+            alert("Please enter a valid amount");
+            return;
+        }
+
+        if (limitData.exists && !window.confirm("A limit already exists. Do you want to modify it?")) return;
+
+        try {
+            const { id, type } = activeMenu;
+            await axios.post(`${API_BASE_URL}/api/limits/${type.toLowerCase()}s/${id}`, {
+                period: limitData.period,
+                limitAmount: parseFloat(limitData.amount)
+            });
+            alert("Spending limit updated successfully!");
+            setShowLimitForm(false);
+            setActiveMenu(null);
+            setLimitData({ period: 'DAILY', amount: '', exists: false });
+        } catch (err) {
+            alert(err.response?.data || "Error saving limit");
+        }
+    };
+
+    const handleRemoveLimit = async () => {
+        const { id, type } = activeMenu;
+        if (!window.confirm(`Are you sure you want to remove all spending limits for this ${type.toLowerCase()}?`)) return;
+
+        try {
+            await axios.delete(`${API_BASE_URL}/api/limits/${type.toLowerCase()}s/${id}`);
+            alert("Spending limits removed.");
+            setActiveMenu(null);
+        } catch (err) {
+            alert("Failed to remove limits");
+        }
+    };
 
     const handleCreateCard = async () => {
         try {
@@ -63,7 +131,64 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
     };
 
     return (
-        <div className="dashboard-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="dashboard-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+
+            {activeMenu && !showLimitForm && (
+                <div
+                    ref={menuRef}
+                    style={{
+                        position: 'fixed', top: activeMenu.y, left: activeMenu.x,
+                        background: 'white', border: '1px solid #cbd5e1', borderRadius: '8px',
+                        boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', zIndex: 1000, width: '180px', padding: '4px'
+                    }}
+                >
+                    <div
+                        onClick={handleSetLimitClick}
+                        style={{ padding: '10px 12px', cursor: 'pointer', fontSize: '13px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px', transition: 'background 0.2s' }}
+                        onMouseEnter={(e) => e.target.style.background = '#f1f5f9'}
+                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                    >
+                        Set Spending Limit
+                    </div>
+                    <div
+                        onClick={limitData.exists ? handleRemoveLimit : null}
+                        style={{
+                            padding: '10px 12px', fontSize: '13px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '8px',
+                            cursor: limitData.exists ? 'pointer' : 'not-allowed',
+                            color: limitData.exists ? '#ef4444' : '#cbd5e1'
+                        }}
+                        onMouseEnter={(e) => limitData.exists && (e.target.style.background = '#fef2f2')}
+                        onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                    >
+                        Remove Limit
+                    </div>
+                </div>
+            )}
+
+            {showLimitForm && (
+                <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1001 }}>
+                    <div style={{ background: 'white', padding: '32px', borderRadius: '16px', width: '380px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)' }}>
+                        <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>Configure Limit</h3>
+                        <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '24px' }}>Set a maximum spending threshold for this {activeMenu?.type.toLowerCase()}.</p>
+
+                        <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>Time Period</label>
+                        <select className="form-input" value={limitData.period} onChange={e => setLimitData({ ...limitData, period: e.target.value })} style={{ width: '100%', marginBottom: '16px' }}>
+                            <option value="DAILY">Daily</option>
+                            <option value="WEEKLY">Weekly</option>
+                            <option value="MONTHLY">Monthly</option>
+                        </select>
+
+                        <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#475569', display: 'block', marginBottom: '6px' }}>Limit Amount</label>
+                        <input className="form-input" type="number" value={limitData.amount} onChange={e => setLimitData({ ...limitData, amount: e.target.value })} style={{ width: '100%', marginBottom: '24px' }} placeholder="0.00" />
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button className="action-btn" onClick={() => { setShowLimitForm(false); setActiveMenu(null); }} style={{ flex: 1, background: '#f1f5f9', color: '#475569' }}>Cancel</button>
+                            <button className="action-btn" onClick={handleSaveLimit} style={{ flex: 1 }}>{limitData.exists ? 'Update' : 'Add Limit'}</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <nav className="dashboard-nav">
                 <h2 className="brand-name">DAN BANK</h2>
                 <div className="nav-actions">
@@ -80,7 +205,6 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
                         </button>
                     </div>
 
-                    {/* Issue New Card Section */}
                     <div className="stat-card" style={{ border: '2px dashed #cbd5e1', background: '#f8fafc', marginBottom: '40px', padding: '30px' }}>
                         <h3 style={{ marginBottom: '20px', color: '#475569', textAlign: 'center' }}>Issue New Virtual Card</h3>
                         <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-end', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -100,24 +224,37 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
                         </div>
                     </div>
 
-                    {/* Grouped Cards by Account */}
                     {accounts.map(account => {
                         const accountCards = cards.filter(c => c.accountId == account.id);
 
                         return (
                             <div key={account.iban} style={{ marginBottom: '40px' }}>
-                                <div style={{ borderBottom: '2px solid #e2e8f0', marginBottom: '20px', paddingBottom: '10px' }}>
-                                    <h3 style={{ color: '#334155' }}>Account: {account.iban}</h3>
-                                    <small style={{ color: '#64748b' }}>Balance: {account.balance?.toFixed(2)}</small>
+                                <div style={{ borderBottom: '2px solid #e2e8f0', marginBottom: '20px', paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <div>
+                                        <h3 style={{ color: '#334155' }}>Account: {account.iban}</h3>
+                                        <small style={{ color: '#64748b' }}>Balance: {account.balance?.toFixed(2)} {account.currency}</small>
+                                    </div>
+                                    <button
+                                        onClick={(e) => openMenu(e, account.id, 'ACCOUNT')}
+                                        style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: '#94a3b8', padding: '5px' }}
+                                    >
+                                        ⋮
+                                    </button>
                                 </div>
 
                                 <div className="stats-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '25px' }}>
                                     {accountCards.length > 0 ? (
                                         accountCards.map(card => (
-                                            <div key={card.id} className="stat-card" style={{
-                                                background: card.blocked ? '#94a3b8' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-                                                color: 'white', minHeight: '200px', minWidth: '340px' , display: 'flex', flexDirection: 'column'
-                                            }}>
+                                            <div
+                                                key={card.id}
+                                                className="stat-card"
+                                                onContextMenu={(e) => openMenu(e, card.id, 'CARD', true)}
+                                                style={{
+                                                    background: card.blocked ? '#94a3b8' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+                                                    color: 'white', minHeight: '200px', minWidth: '340px' , display: 'flex', flexDirection: 'column',
+                                                    cursor: 'context-menu', transition: 'transform 0.2s'
+                                                }}
+                                            >
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                                     <div>
                                                         <span style={{ fontSize: '0.8rem', fontWeight: 'bold' }}>{card.cardType}</span>

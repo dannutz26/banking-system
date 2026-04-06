@@ -12,4 +12,7 @@ import java.util.Optional;
 public interface SpendingLimitRepository extends JpaRepository<SpendingLimit, Long> {
     List<SpendingLimit> findByAccountId(Long accountId);
     Optional<SpendingLimit> findByAccountIdAndPeriod(Long accountId, LimitPeriod period);
+
+    List<SpendingLimit> findByCardId(Long cardId);
+    Optional<SpendingLimit> findByCardIdAndPeriod(Long cardId, LimitPeriod period);
 }
