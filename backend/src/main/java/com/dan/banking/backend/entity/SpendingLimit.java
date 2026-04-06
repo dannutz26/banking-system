@@ -20,6 +20,10 @@ public class SpendingLimit {
     @JoinColumn(name = "account_id")
     private Account account;
 
+    @ManyToOne
+    @JoinColumn(name = "card_id")
+    private Card card;
+
     @Enumerated(EnumType.STRING)
     private LimitPeriod period;
 
