@@ -57,8 +57,7 @@ public class SpendingLimitService {
         limitRepository.deleteAll(limits);
     }
 
-    // ADDED cardId TO PARAMETERS
-    public void validateTransaction(Long accountId, BigDecimal amount) {
+    public void validateTransaction(Long accountId, Long cardId, BigDecimal amount) {
         if (accountId != null) check(limitRepository.findByAccountId(accountId), amount);
         if (cardId != null) check(limitRepository.findByCardId(cardId), amount);
     }
@@ -73,8 +72,7 @@ public class SpendingLimitService {
     }
 
     @Transactional
-    // ADDED cardId TO PARAMETERS
-    public void updateSpentCounters(Long accountId, BigDecimal amount) {
+    public void updateSpentCounters(Long accountId, Long cardId, BigDecimal amount) {
         if (accountId != null) {
             limitRepository.findByAccountId(accountId).forEach(l -> l.setCurrentSpent(l.getCurrentSpent().add(amount)));
         }

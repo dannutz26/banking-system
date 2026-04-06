@@ -75,7 +75,7 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
             setActiveMenu(null);
             setLimitData({ period: 'DAILY', amount: '', exists: false });
         } catch (err) {
-            alert(err.response?.data || "Error saving limit");
+            alert(err?.response?.data || "Error saving limit");
         }
     };
 
@@ -101,9 +101,9 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
 
             await axios.post(`${API_BASE_URL}/api/dashboard/cards/create?${params.toString()}`);
             setIsDisposable(false);
-            fetchCards();
+            await fetchCards();
         } catch (err) {
-            alert(err.response?.data || "Failed to create card");
+            alert(err?.response?.data || "Failed to create card");
         }
     };
 
@@ -112,7 +112,7 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
             await axios.post(`${API_BASE_URL}/api/dashboard/cards/toggle-block`, null, {
                 params: { cardId: cardId }
             });
-            fetchCards();
+            await fetchCards();
         } catch (err) {
             alert("Failed to update card status");
         }
@@ -124,7 +124,7 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
             await axios.delete(`${API_BASE_URL}/api/dashboard/cards/delete`, {
                 params: { cardId: cardId }
             });
-            fetchCards();
+            await fetchCards();
         } catch (err) {
             alert("Failed to cancel card");
         }
@@ -216,6 +216,13 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
                                     ))}
                                 </select>
                             </div>
+                            <div style={{ flex: '1', minWidth: '200px' }}>
+                                <label style={{ fontSize: '12px', fontWeight: '600', color: '#64748b' }}>Card Type</label>
+                                <select className="form-input" value={cardType} onChange={e => setCardType(e.target.value)} style={{ width: '100%', marginTop: '5px' }}>
+                                    <option value="VISA">Visa</option>
+                                    <option value="MASTERCARD">Mastercard</option>
+                                </select>
+                            </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', height: '45px' }}>
                                 <input type="checkbox" id="disposable" checked={isDisposable} onChange={(e) => setIsDisposable(e.target.checked)} />
                                 <label htmlFor="disposable" style={{ fontSize: '13px', color: '#64748b', cursor: 'pointer' }}>Disposable</label>
@@ -225,14 +232,14 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
                     </div>
 
                     {accounts.map(account => {
-                        const accountCards = cards.filter(c => c.accountId == account.id);
+                        const accountCards = cards.filter(c => c.accountId === account.id);
 
                         return (
                             <div key={account.iban} style={{ marginBottom: '40px' }}>
                                 <div style={{ borderBottom: '2px solid #e2e8f0', marginBottom: '20px', paddingBottom: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <div>
                                         <h3 style={{ color: '#334155' }}>Account: {account.iban}</h3>
-                                        <small style={{ color: '#64748b' }}>Balance: {account.balance?.toFixed(2)} {account.currency}</small>
+                                        <small style={{ color: '#64748b' }}>Balance: {account.balance?.toFixed(2) || '0.00'} {account.currency}</small>
                                     </div>
                                     <button
                                         onClick={(e) => openMenu(e, account.id, 'ACCOUNT')}
@@ -275,7 +282,7 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
                                                 </div>
 
                                                 <h3 style={{ margin: '35px 0', textAlign: 'center', letterSpacing: '3px', fontSize: '1.2rem' }}>
-                                                    {card.cardNumber.replace(/(\d{4})/g, '$1 ').trim()}
+                                                    {card?.cardNumber?.replace(/(\d{4})/g, '$1 ').trim()}
                                                 </h3>
 
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto', alignItems: 'flex-end' }}>
@@ -289,7 +296,7 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
                                                     </div>
                                                     <div style={{ textAlign: 'right' }}>
                                                         <small style={{ opacity: 0.7, display: 'block', fontSize: '0.65rem' }}>EXPIRES</small>
-                                                        <span style={{ fontSize: '0.85rem' }}>{card.expiryDate.substring(5, 7)}/{card.expiryDate.substring(2, 4)}</span>
+                                                        <span style={{ fontSize: '0.85rem' }}>{card?.expiryDate?.substring(5, 7)}/{card?.expiryDate?.substring(2, 4)}</span>
                                                     </div>
                                                 </div>
                                             </div>

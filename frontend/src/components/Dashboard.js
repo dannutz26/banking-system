@@ -136,7 +136,7 @@ const Dashboard = ({ email, onLogout }) => {
                                 <tr key={acc.iban} className={acc.iban === userData?.primaryIban ? "primary-row" : ""}>
                                     <td style={{fontSize: '0.8rem'}}>{acc.iban}</td>
                                     <td>{acc.currency}</td>
-                                    <td className="amount-positive">{acc.balance.toFixed(2)}</td>
+                                    <td className="amount-positive">{acc.balance?.toFixed(2) || '0.00'}</td>
                                 </tr>
                             ))
                         ) : (
@@ -170,7 +170,7 @@ const Dashboard = ({ email, onLogout }) => {
                                         </td>
                                         <td style={{fontSize: '0.8rem'}}>{tx.description}</td>
                                         <td className={tx.amount < 0 ? "amount-negative" : "amount-positive"}>
-                                            {tx.amount > 0 ? `+${tx.amount.toFixed(2)}` : tx.amount.toFixed(2)} {tx.currency}
+                                            {tx.amount > 0 ? `+${tx.amount?.toFixed(2) || '0.00'}` : tx.amount?.toFixed(2) || '0.00'} {tx.currency}
                                         </td>
                                     </tr>
                                 ))

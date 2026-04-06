@@ -95,7 +95,7 @@ public class AccountService {
             double amountToCredit = calculateCreditAmount(source, target, amountToDebit);
 
             updateBalances(source, target, amountToDebit, amountToCredit);
-            spendingLimitService.updateSpentCounters(source.getId(), BigDecimal.valueOf(amountToDebit));
+            spendingLimitService.updateSpentCounters(source.getId(), null, BigDecimal.valueOf(amountToDebit));
             createTransactionLogs(source, target, amountToDebit, amountToCredit);
 
             auditLogRepository.save(new AuditLog("TRANSFER_SUCCESS", logDetails, "SUCCESS"));
@@ -131,7 +131,7 @@ public class AccountService {
             throw new InsuficientFundsException();
         }
 
-        spendingLimitService.validateTransaction(source.getId(), BigDecimal.valueOf(request.getAmount()));
+        spendingLimitService.validateTransaction(source.getId(), null, BigDecimal.valueOf(request.getAmount()));
     }
 
     private double calculateCreditAmount(Account source, Account target, double amount) {
