@@ -5,6 +5,7 @@ import TransferMoney from "./TransferMoney";
 import Settings from "./Settings";
 import DepositMoney from "./DepositMoney";
 import CardsView from "./CardsView";
+import SpendingGraph from "./SpendingGraph";
 import axios from 'axios';
 import API_BASE_URL from '../config';
 
@@ -148,6 +149,14 @@ const Dashboard = ({ email, onLogout }) => {
                         )}
                         </tbody>
                     </table>
+
+                    <div className="summary-section">
+                        <SpendingGraph
+                            totalSpent={spendingData.totalSpent}
+                            totalLimit={spendingData.totalLimit}
+                            hasLimit={spendingData.hasLimit}
+                        />
+                    </div>
                 </section>
 
                 <section className="transactions-section">

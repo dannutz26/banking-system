@@ -23,6 +23,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Currency;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -214,5 +215,24 @@ public class AccountService {
         depositTx.setTimestamp(java.time.LocalDateTime.now());
 
         transactionRepository.save(depositTx);
+    }
+
+    public Map<String, Object> getGlobalSpendingOverview(String email) {
+        List<Account> accounts = accountRepository.findByOwnerEmail(email);
+
+        BigDecimal totalSpent = accounts.stream()
+                .map(Account::getSpentThisMonth)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal totalLimit = accounts.stream()
+                .map(acc -> acc.getSpendingLimit() != null ? BigDecimal.valueOf(acc.getSpendingLimit()) : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Map<String, Object> overview = new HashMap<>();
+        overview.put("totalSpent", totalSpent);
+        overview.put("totalLimit", totalLimit);
+        overview.put("hasLimit", totalLimit.compareTo(BigDecimal.ZERO) > 0);
+
+        return overview;
     }
 }
