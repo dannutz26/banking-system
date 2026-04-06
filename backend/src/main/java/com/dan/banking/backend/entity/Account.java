@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "accounts")
 @Data
@@ -23,4 +25,7 @@ public class Account {
     @JoinColumn(name = "owner_id")
     @com.fasterxml.jackson.annotation.JsonIgnore
     private User owner;
+
+    private BigDecimal spendingLimit;
+    private BigDecimal currentlySpent = BigDecimal.ZERO;
 }

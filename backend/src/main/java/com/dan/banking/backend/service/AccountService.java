@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Currency;
 import java.util.List;
@@ -34,6 +35,7 @@ public class AccountService {
     private final TransactionRepository transactionRepository;
     private final AuditLogRepository auditLogRepository;
     private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
+    private final SpendingLimitService spendingLimitService;
 
     public List<Account> getAccounts(String email) {
         logger.debug("Fetching accounts for user: {}", email);
@@ -93,6 +95,7 @@ public class AccountService {
             double amountToCredit = calculateCreditAmount(source, target, amountToDebit);
 
             updateBalances(source, target, amountToDebit, amountToCredit);
+            spendingLimitService.updateSpentCounters(source.getId(), BigDecimal.valueOf(amountToDebit));
             createTransactionLogs(source, target, amountToDebit, amountToCredit);
 
             auditLogRepository.save(new AuditLog("TRANSFER_SUCCESS", logDetails, "SUCCESS"));
@@ -127,6 +130,8 @@ public class AccountService {
             logger.warn("Transfer rejected: Insufficient funds for IBAN {}", source.getIban());
             throw new InsuficientFundsException();
         }
+
+        spendingLimitService.validateTransaction(source.getId(), BigDecimal.valueOf(request.getAmount()));
     }
 
     private double calculateCreditAmount(Account source, Account target, double amount) {
