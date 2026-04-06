@@ -116,7 +116,7 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
                                         accountCards.map(card => (
                                             <div key={card.id} className="stat-card" style={{
                                                 background: card.blocked ? '#94a3b8' : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-                                                color: 'white', minHeight: '220px', display: 'flex', flexDirection: 'column'
+                                                color: 'white', minHeight: '200px', minWidth: '340px' , display: 'flex', flexDirection: 'column'
                                             }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                                     <div>

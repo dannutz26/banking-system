@@ -6,6 +6,7 @@ create table cards (
     expiry_date date not null,
     card_type varchar(20) not null,
     is_blocked boolean default false,
+    is_disposable boolean default false,
     account_id bigint not null,
 
     constraint fk_card_account

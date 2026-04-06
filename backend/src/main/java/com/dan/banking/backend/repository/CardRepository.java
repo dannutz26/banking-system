@@ -12,5 +12,5 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     List<Card> findByEmail(@Param("email") String email);
 
     @Query(value = "SELECT COUNT(*) > 0 FROM cards WHERE account_id = :accountId AND is_blocked = false AND is_disposable = false", nativeQuery = true)
-    Integer hasActiveCard(@Param("accountId") Long accountId);
+    Boolean hasActiveCard(@Param("accountId") Long accountId);
 }

@@ -34,7 +34,8 @@ public class CardService {
         Account account = accountRepository.findByIban(iban)
                 .orElseThrow(() -> new RuntimeException("Account not found"));
 
-        if (!disposable && cardRepository.hasActiveCard(account.getId()) > 0) {
+        Boolean hasActiveCard = cardRepository.hasActiveCard(account.getId());
+        if (!disposable && hasActiveCard != null && hasActiveCard) {
             throw new RuntimeException("Active card already exists for this account.");
         }
 
