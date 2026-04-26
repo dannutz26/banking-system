@@ -217,7 +217,7 @@ public class AccountService {
         transactionRepository.save(depositTx);
     }
 
-    public Map<String, Object> getGlobalSpendingOverview(String email) {
+    /*public Map<String, Object> getGlobalSpendingOverview(String email) {
         List<Account> accounts = accountRepository.findByOwnerEmail(email);
 
         BigDecimal totalSpent = accounts.stream()
@@ -234,5 +234,5 @@ public class AccountService {
         overview.put("hasLimit", totalLimit.compareTo(BigDecimal.ZERO) > 0);
 
         return overview;
-    }
+    }*/
 }

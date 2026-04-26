@@ -150,13 +150,13 @@ const Dashboard = ({ email, onLogout }) => {
                         </tbody>
                     </table>
 
-                    <div className="summary-section">
+                    {/*<div className="summary-section">
                         <SpendingGraph
                             totalSpent={spendingData.totalSpent}
                             totalLimit={spendingData.totalLimit}
                             hasLimit={spendingData.hasLimit}
                         />
-                    </div>
+                    </div>*/}
                 </section>
 
                 <section className="transactions-section">
