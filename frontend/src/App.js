@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Login from './components/Login';
-import Register from "./components/Register";
-import Dashboard from "./components/Dashboard";
+import Login from './components/auth/Login';
+import Register from "./components/auth/Register";
+import Dashboard from "./components/dashboard/Dashboard";
 import API_BASE_URL from './config';
 
 axios.defaults.withCredentials = true;
