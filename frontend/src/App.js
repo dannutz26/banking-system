@@ -5,7 +5,15 @@ import Register from "./components/auth/Register";
 import Dashboard from "./components/dashboard/Dashboard";
 import API_BASE_URL from './config';
 
-axios.defaults.withCredentials = true;
+const AUTH_TOKEN_KEY = 'BANKING_AUTH_TOKEN';
+
+function setAuthHeader(token) {
+    if (token) {
+        axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+    } else {
+        delete axios.defaults.headers.common.Authorization;
+    }
+}
 
 function App() {
     const [view, setView] = useState('login');
@@ -13,16 +21,22 @@ function App() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        if (token) {
+            setAuthHeader(token);
+        }
+
         const checkSession = async () => {
             try {
                 const response = await axios.get(`${API_BASE_URL}/api/auth/me`);
-
                 if (response.status === 200) {
-                    setUser({ email: response.data });
+                    setUser({ email: response.data.email });
                     setView('dashboard');
                 }
             } catch (err) {
-                console.log("No active session found via cookie.");
+                localStorage.removeItem(AUTH_TOKEN_KEY);
+                setAuthHeader(null);
+                setView('login');
             } finally {
                 setLoading(false);
             }
@@ -31,8 +45,10 @@ function App() {
         checkSession();
     }, []);
 
-    const handleLoginSuccess = (userData) => {
-        setUser(userData);
+    const handleLoginSuccess = ({ email, token }) => {
+        localStorage.setItem(AUTH_TOKEN_KEY, token);
+        setAuthHeader(token);
+        setUser({ email });
         setView('dashboard');
     };
 
@@ -42,6 +58,8 @@ function App() {
         } catch (err) {
             console.error("Logout error:", err);
         } finally {
+            localStorage.removeItem(AUTH_TOKEN_KEY);
+            setAuthHeader(null);
             setUser(null);
             setView('login');
         }

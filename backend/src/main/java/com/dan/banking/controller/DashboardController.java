@@ -1,18 +1,21 @@
 package com.dan.banking.controller;
 
-import com.dan.banking.dto.AccountRequest;
-import com.dan.banking.dto.AccountResponse;
-import com.dan.banking.dto.TransferRequest;
+import com.dan.banking.dto.*;
 import com.dan.banking.entity.*;
 import com.dan.banking.service.IAccountService;
 import com.dan.banking.service.CardService;
 import com.dan.banking.service.CurrencyService;
 import com.dan.banking.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
+import java.security.Principal;
+import java.util.Currency;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -24,31 +27,33 @@ public class DashboardController {
     private final CardService cardService;
 
     @GetMapping("/user-data")
-    public ResponseEntity<?> getUserData(@RequestParam String email) {
+    public ResponseEntity<UserDashboardResponse> getUserData(Principal principal) {
+        String email = principal.getName();
         User user = userService.getUserByEmail(email).orElseThrow();
         UserSettings settings = user.getSettings();
         List<Account> accounts = accountService.getAccounts(email);
 
-        String targetCurr = (settings != null) ? settings.getPreferredCurrency() : "EUR";
-
+        String targetCurrency = (settings != null) ? settings.getPreferredCurrency() : "EUR";
         double totalNetWorth = accounts.stream()
                 .mapToDouble(acc -> {
-                    if (acc.getCurrency().equals(targetCurr)) return acc.getBalance();
-                    return acc.getBalance() * currencyService.getExchangeRate(acc.getCurrency(), targetCurr);
+                    if (acc.getCurrency().equals(targetCurrency)) {
+                        return acc.getBalance();
+                    }
+                    return acc.getBalance() * currencyService.getExchangeRate(acc.getCurrency(), targetCurrency);
                 })
                 .sum();
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("firstName", user.getFirstName());
-        response.put("totalNetWorth", totalNetWorth);
-        response.put("preferredCurrency", targetCurr);
-        response.put("primaryIban", settings != null ? settings.getPrimaryAccountIban() : null);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new UserDashboardResponse(
+                user.getFirstName(),
+                totalNetWorth,
+                targetCurrency,
+                settings != null ? settings.getPrimaryAccountIban() : null
+        ));
     }
 
     @GetMapping("/user-accounts")
-    public ResponseEntity<?> getUserAccounts(@RequestParam String email) {
+    public ResponseEntity<List<AccountResponse>> getUserAccounts(Principal principal) {
+        String email = principal.getName();
         List<Account> accountList = accountService.getAccounts(email);
 
         List<AccountResponse> response = accountList.stream()
@@ -59,12 +64,13 @@ public class DashboardController {
     }
 
     @PostMapping("/create-account")
-    public ResponseEntity<?> createAccount(@RequestBody AccountRequest accountRequest) {
+    public ResponseEntity<String> createAccount(@Valid @RequestBody AccountRequest accountRequest, Principal principal) {
         try {
+            accountRequest.setOwnerEmail(principal.getName());
             accountService.insertAccount(accountRequest);
             return ResponseEntity.ok("Account created successfully!");
-        }  catch (RuntimeException e) {
-            return ResponseEntity.status(400).body("Account creation failed!");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body("Account creation failed: " + e.getMessage());
         }
     }
 
@@ -72,20 +78,20 @@ public class DashboardController {
     public ResponseEntity<List<Map<String, String>>> getAvailableCurrencies() {
         List<Map<String, String>> currencies = Currency.getAvailableCurrencies().stream()
                 .map(c -> {
-                    Map<String, String> map = new java.util.HashMap<>();
+                    Map<String, String> map = new HashMap<>();
                     map.put("code", c.getCurrencyCode());
                     map.put("name", c.getDisplayName());
                     return map;
                 })
                 .sorted((a, b) -> a.get("code").compareTo(b.get("code")))
                 .toList();
-
         return ResponseEntity.ok(currencies);
     }
 
     @PostMapping("/transfer")
-    public ResponseEntity<?> transferMoney(@RequestBody TransferRequest request) {
+    public ResponseEntity<String> transferMoney(@Valid @RequestBody TransferRequest request, Principal principal) {
         try {
+            request.setOwnerEmail(principal.getName());
             accountService.transferMoney(request);
             return ResponseEntity.ok("Transfer completed successfully!");
         } catch (RuntimeException e) {
@@ -94,17 +100,13 @@ public class DashboardController {
     }
 
     @GetMapping("/transactions")
-    public ResponseEntity<?> getTransactions(@RequestParam String email) {
-        try {
-            List<Transaction> transactions = accountService.getAllTransactionsForUser(email);
-            return ResponseEntity.ok(transactions);
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Could not fetch transactions");
-        }
+    public ResponseEntity<List<Transaction>> getTransactions(Principal principal) {
+        String email = principal.getName();
+        return ResponseEntity.ok(accountService.getAllTransactionsForUser(email));
     }
 
     @PostMapping("/deposit")
-    public ResponseEntity<?> depositMoney(@RequestBody com.dan.banking.dto.DepositRequest request) {
+    public ResponseEntity<String> depositMoney(@Valid @RequestBody DepositRequest request) {
         try {
             accountService.depositMoney(request.getIban(), request.getAmount());
             return ResponseEntity.ok("Deposit completed successfully!");
@@ -114,29 +116,48 @@ public class DashboardController {
     }
 
     @GetMapping("/cards")
-    public ResponseEntity<?> getCards(@RequestParam String email) {
-        return ResponseEntity.ok(cardService.getCardsByEmail(email));
+    public ResponseEntity<List<CardResponse>> getCards(Principal principal) {
+        List<CardResponse> cards = cardService.getCardsByEmail(principal.getName()).stream()
+                .map(this::toCardResponse)
+                .toList();
+        return ResponseEntity.ok(cards);
     }
 
     @PostMapping("/cards/create")
-    public ResponseEntity<?> createCard(@RequestParam String iban, @RequestParam String type, @RequestParam boolean disposable) {
-        try {
-            return ResponseEntity.ok(cardService.createCard(iban, type, disposable));
-        } catch (Exception e) {
-            return ResponseEntity.status(400).body(e.getMessage());
+    public ResponseEntity<CardResponse> createCard(@Valid @RequestBody CardRequest request, Principal principal) {
+        Card createdCard = cardService.createCard(principal.getName(), request.getIban(), request.getType(), request.isDisposable());
+        return ResponseEntity.ok(toCardResponse(createdCard));
+    }
+
+    private CardResponse toCardResponse(Card card) {
+        String fullNumber = card.getCardNumber();
+        String maskedNumber = fullNumber;
+        if (maskedNumber != null && maskedNumber.length() >= 4) {
+            maskedNumber = "**** **** **** " + maskedNumber.substring(maskedNumber.length() - 4);
         }
+        return new CardResponse(
+                card.getId(),
+                fullNumber,
+                maskedNumber,
+                card.getCardHolderName(),
+                card.getExpiryDate(),
+                card.getCardType(),
+                card.isBlocked(),
+                card.isDisposable(),
+                card.getAccountId()
+        );
     }
 
     @PostMapping("/cards/toggle-block")
-    public ResponseEntity<?> toggleBlock(@RequestParam Long cardId) {
-        cardService.toggleBlock(cardId);
+    public ResponseEntity<String> toggleBlock(@RequestParam Long cardId, Principal principal) {
+        cardService.toggleBlock(cardId, principal.getName());
         return ResponseEntity.ok("Success");
     }
 
     @DeleteMapping("/cards/delete")
-    public ResponseEntity<?> deleteCard(@RequestParam Long cardId) {
+    public ResponseEntity<String> deleteCard(@RequestParam Long cardId, Principal principal) {
         try {
-            cardService.deleteCard(cardId);
+            cardService.deleteCard(cardId, principal.getName());
             return ResponseEntity.ok("Card cancelled successfully");
         } catch (Exception e) {
             return ResponseEntity.status(400).body(e.getMessage());

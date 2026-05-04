@@ -18,13 +18,13 @@ const Dashboard = ({ email, onLogout }) => {
 
     const loadDashboardData = async () => {
         try {
-            const userRes = await axios.get(`${API_BASE_URL}/api/dashboard/user-data?email=${email}`);
+            const userRes = await axios.get(`${API_BASE_URL}/api/dashboard/user-data`);
             setUserData(userRes.data);
 
-            const accountsRes = await axios.get(`${API_BASE_URL}/api/dashboard/user-accounts?email=${email}`);
+            const accountsRes = await axios.get(`${API_BASE_URL}/api/dashboard/user-accounts`);
             setAccounts(accountsRes.data);
 
-            const transRes = await axios.get(`${API_BASE_URL}/api/dashboard/transactions?email=${email}`);
+            const transRes = await axios.get(`${API_BASE_URL}/api/dashboard/transactions`);
             setTransactions(transRes.data);
 
             setLoading(false);
@@ -42,7 +42,7 @@ const Dashboard = ({ email, onLogout }) => {
 
     const handleSaveSettings = async (prefCurrency, primaryIban) => {
         try {
-            await axios.post(`${API_BASE_URL}/api/settings/update?email=${encodeURIComponent(email)}`, {
+            await axios.put(`${API_BASE_URL}/api/settings/update`, {
                 preferredCurrency: prefCurrency,
                 primaryAccountIban: primaryIban,
                 darkMode: false

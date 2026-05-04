@@ -11,8 +11,7 @@ const DepositMoney = ({ email, accounts, onCancel, onSuccess, onLogout }) => {
         try {
             await axios.post(`${API_BASE_URL}/api/dashboard/deposit`, {
                 iban: selectedIban,
-                amount: parseFloat(amount),
-                email: email
+                amount: parseFloat(amount)
             });
             onSuccess();
         } catch (err) {

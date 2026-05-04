@@ -13,7 +13,7 @@ const TransferMoney = ({ email, accounts, onCancel, onTransferSuccess, onLogout 
     const handleTransfer = async (e) => {
         e.preventDefault();
         try {
-            const payload = { fromIban, toIban, amount: parseFloat(amount), ownerEmail: email };
+            const payload = { fromIban, toIban, amount: parseFloat(amount) };
             await axios.post(`${API_BASE_URL}/api/dashboard/transfer`, payload);
             setMessage("Transfer Successful!");
             setTimeout(() => onTransferSuccess(), 1500);

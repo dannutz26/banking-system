@@ -30,9 +30,9 @@ public class CardService {
     }
 
     @Transactional
-    public Card createCard(String iban, String type, boolean disposable) {
-        Account account = accountRepository.findByIban(iban)
-                .orElseThrow(() -> new RuntimeException("Account not found"));
+    public Card createCard(String userEmail, String iban, String type, boolean disposable) {
+        Account account = accountRepository.findByIbanAndOwnerEmail(iban, userEmail)
+                .orElseThrow(() -> new RuntimeException("Account not found or does not belong to current user"));
 
         Boolean hasActiveCard = cardRepository.hasActiveCard(account.getId());
         if (!disposable && hasActiveCard != null && hasActiveCard) {
@@ -50,18 +50,16 @@ public class CardService {
         card.setBlocked(false);
 
         Card savedCard = cardRepository.save(card);
-
         auditLogRepository.save(new AuditLog("CARD_CREATION",
                 (disposable ? "Disposable " : "Permanent ") + "card " + savedCard.getCardNumber() + " created for IBAN: " + iban,
                 "SUCCESS"));
-
         return savedCard;
     }
 
     @Transactional
-    public void toggleBlock(Long id) {
-        Card card = cardRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+    public void toggleBlock(Long id, String userEmail) {
+        Card card = cardRepository.findByIdAndOwnerEmail(id, userEmail)
+                .orElseThrow(() -> new RuntimeException("Card not found or does not belong to current user"));
 
         card.setBlocked(!card.isBlocked());
         cardRepository.save(card);
@@ -73,9 +71,9 @@ public class CardService {
     }
 
     @Transactional
-    public void deleteCard(Long cardId) {
-        Card card = cardRepository.findById(cardId)
-                .orElseThrow(() -> new RuntimeException("Card not found"));
+    public void deleteCard(Long cardId, String userEmail) {
+        Card card = cardRepository.findByIdAndOwnerEmail(cardId, userEmail)
+                .orElseThrow(() -> new RuntimeException("Card not found or does not belong to current user"));
 
         auditLogRepository.save(new AuditLog("CARD_DELETION",
                 "Card " + card.getCardNumber() + " (ID: " + cardId + ") was permanently cancelled.",

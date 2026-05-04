@@ -8,6 +8,7 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
     const [cardType, setCardType] = useState('VISA');
     const [isDisposable, setIsDisposable] = useState(false);
     const [revealedCardId, setRevealedCardId] = useState(null);
+    const [revealedFullCardId, setRevealedFullCardId] = useState(null);
 
     const [activeMenu, setActiveMenu] = useState(null);
     const [showLimitForm, setShowLimitForm] = useState(false);
@@ -16,14 +17,12 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
 
     const fetchCards = useCallback(async () => {
         try {
-            const res = await axios.get(`${API_BASE_URL}/api/dashboard/cards`, {
-                params: { email: email }
-            });
+            const res = await axios.get(`${API_BASE_URL}/api/dashboard/cards`);
             setCards(res.data);
         } catch (err) {
             console.error("Failed to fetch cards:", err);
         }
-    }, [email]);
+    }, []);
 
     useEffect(() => {
         if (email) fetchCards();
@@ -94,12 +93,11 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
 
     const handleCreateCard = async () => {
         try {
-            const params = new URLSearchParams();
-            params.append('iban', selectedIban);
-            params.append('type', cardType);
-            params.append('disposable', isDisposable);
-
-            await axios.post(`${API_BASE_URL}/api/dashboard/cards/create?${params.toString()}`);
+            await axios.post(`${API_BASE_URL}/api/dashboard/cards/create`, {
+                iban: selectedIban,
+                type: cardType,
+                disposable: isDisposable
+            });
             setIsDisposable(false);
             await fetchCards();
         } catch (err) {
@@ -127,6 +125,15 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
             await fetchCards();
         } catch (err) {
             alert("Failed to cancel card");
+        }
+    };
+
+    const copyToClipboard = async (text, label) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            alert(`${label} copied to clipboard!`);
+        } catch (err) {
+            alert('Failed to copy to clipboard');
         }
     };
 
@@ -281,8 +288,8 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
                                                     </div>
                                                 </div>
 
-                                                <h3 style={{ margin: '35px 0', textAlign: 'center', letterSpacing: '3px', fontSize: '1.2rem' }}>
-                                                    {card?.cardNumber?.replace(/(\d{4})/g, '$1 ').trim()}
+                                                <h3 style={{ margin: '35px 0', textAlign: 'center', letterSpacing: '3px', fontSize: '1.2rem', cursor: 'pointer' }} onClick={() => copyToClipboard(card.cardNumber, 'Card number')}>
+                                                    {revealedFullCardId === card.id ? card?.cardNumber?.replace(/(\d{4})/g, '$1 ').trim() : card?.maskedCardNumber?.replace(/(\d{4})/g, '$1 ').trim()}
                                                 </h3>
 
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 'auto', alignItems: 'flex-end' }}>
@@ -290,13 +297,50 @@ const CardsView = ({ email, accounts, onCancel, onLogout }) => {
                                                         <small style={{ opacity: 0.7, display: 'block', fontSize: '0.65rem' }}>HOLDER</small>
                                                         <span style={{ fontSize: '0.85rem' }}>{card.cardHolderName}</span>
                                                     </div>
-                                                    <div style={{ textAlign: 'center', cursor: 'pointer' }} onClick={() => setRevealedCardId(revealedCardId === card.id ? null : card.id)}>
+                                                    <div style={{ textAlign: 'center' }}>
                                                         <small style={{ opacity: 0.7, display: 'block', fontSize: '0.65rem' }}>CVV</small>
-                                                        <span style={{ fontSize: '0.85rem' }}>{revealedCardId === card.id ? card.cvv : '***'}</span>
+                                                        <span style={{ fontSize: '0.85rem', cursor: 'pointer' }} onClick={() => setRevealedCardId(revealedCardId === card.id ? null : card.id)}>
+                                                            {revealedCardId === card.id ? card.cvv : '***'}
+                                                        </span>
+                                                        {revealedCardId === card.id && (
+                                                            <button 
+                                                                onClick={() => copyToClipboard(card.cvv, 'CVV')}
+                                                                style={{ 
+                                                                    background: 'rgba(255,255,255,0.2)', 
+                                                                    border: '1px solid white', 
+                                                                    color: 'white', 
+                                                                    borderRadius: '4px', 
+                                                                    padding: '1px 4px', 
+                                                                    fontSize: '8px', 
+                                                                    cursor: 'pointer',
+                                                                    marginLeft: '5px'
+                                                                }}
+                                                            >
+                                                                Copy
+                                                            </button>
+                                                        )}
                                                     </div>
                                                     <div style={{ textAlign: 'right' }}>
                                                         <small style={{ opacity: 0.7, display: 'block', fontSize: '0.65rem' }}>EXPIRES</small>
-                                                        <span style={{ fontSize: '0.85rem' }}>{card?.expiryDate?.substring(5, 7)}/{card?.expiryDate?.substring(2, 4)}</span>
+                                                        <span style={{ fontSize: '0.85rem', cursor: 'pointer' }} onClick={() => copyToClipboard(`${card?.expiryDate?.substring(5, 7)}/${card?.expiryDate?.substring(2, 4)}`, 'Expiry date')}>
+                                                            {card?.expiryDate?.substring(5, 7)}/{card?.expiryDate?.substring(2, 4)}
+                                                        </span>
+                                                        <br />
+                                                        <button 
+                                                            onClick={() => setRevealedFullCardId(revealedFullCardId === card.id ? null : card.id)}
+                                                            style={{ 
+                                                                background: 'rgba(255,255,255,0.2)', 
+                                                                border: '1px solid white', 
+                                                                color: 'white', 
+                                                                borderRadius: '4px', 
+                                                                padding: '2px 6px', 
+                                                                fontSize: '10px', 
+                                                                cursor: 'pointer',
+                                                                marginTop: '5px'
+                                                            }}
+                                                        >
+                                                            {revealedFullCardId === card.id ? 'Hide' : 'Show Full'}
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>

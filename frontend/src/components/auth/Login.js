@@ -6,20 +6,14 @@ const Login = ({ onSwitch, onLoginSuccess }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState('');
-    const [rememberMe, setRememberMe] = useState(false);
 
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post(
-                `${API_BASE_URL}/api/auth/login?rememberMe=${rememberMe}`,
-                { email, password }
-            );
-
-            onLoginSuccess({ email: email });
-
+            const response = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
+            onLoginSuccess({ email, token: response.data.token });
         } catch (error) {
-            setMessage("Login Failed. Check your credentials.");
+            setMessage("Login failed. Check your credentials.");
         }
     };
 
@@ -43,30 +37,6 @@ const Login = ({ onSwitch, onLoginSuccess }) => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
-                </div>
-
-                <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    marginBottom: '20px',
-                    justifyContent: 'flex-start',
-                    width: '100%',
-                    padding: '0 5px'
-                }}>
-                    <input
-                        type="checkbox"
-                        id="rememberMe"
-                        checked={rememberMe}
-                        onChange={(e) => setRememberMe(e.target.checked)}
-                        style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                    />
-                    <label
-                        htmlFor="rememberMe"
-                        style={{ fontSize: '14px', color: '#64748b', cursor: 'pointer', userSelect: 'none' }}
-                    >
-                        Remember me
-                    </label>
                 </div>
 
                 <button type="submit" className="login-button">

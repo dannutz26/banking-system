@@ -23,7 +23,7 @@ const CreateAccount = ({ email, onCancel, onCreateAccountSuccess, onLogout }) =>
     const handleCreateAccount = async (e) => {
         e.preventDefault();
         try {
-            const payload = { currency, ownerEmail: email };
+            const payload = { currency };
             await axios.post(`${API_BASE_URL}/api/dashboard/create-account`, payload);
             setMessage("Account created successfully!");
             setTimeout(() => onCreateAccountSuccess(), 1000);
