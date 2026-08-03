@@ -9,8 +9,8 @@ import java.util.List;
 
 public interface IAccountService {
     List<Account> getAccounts(String email);
-    void insertAccount(AccountRequest accountRequest);
-    void transferMoney(TransferRequest request, String idempotencyKey);
+    void insertAccount(AccountRequest accountRequest, String ownerEmail);
+    void transferMoney(TransferRequest request, String idempotencyKey, String ownerEmail);
     double getTotalBalanceInCurrency(String email, String targetCurrency);
     List<Transaction> getAllTransactionsForUser(String email);
     void depositMoney(String iban, Double amount);

@@ -18,6 +18,4 @@ public class TransferRequest {
 
     @Positive(message = "Amount must be greater than zero")
     private double amount;
-
-    private String ownerEmail;
 }

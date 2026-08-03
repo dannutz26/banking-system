@@ -48,12 +48,12 @@ public class AccountService implements IAccountService {
         return accountRepository.findByOwnerEmail(email);
     }
 
-    public void insertAccount(AccountRequest accountRequest) {
-        logger.info("Attempting to create account for user: {}", accountRequest.getOwnerEmail());
+    public void insertAccount(AccountRequest accountRequest, String ownerEmail) {
+        logger.info("Attempting to create account for user: {}", ownerEmail);
 
         try {
-            User owner = userRepository.findByEmail(accountRequest.getOwnerEmail())
-                    .orElseThrow(() -> new UserNotFoundException(accountRequest.getOwnerEmail()));
+            User owner = userRepository.findByEmail(ownerEmail)
+                    .orElseThrow(() -> new UserNotFoundException(ownerEmail));
 
             String uniqueIban;
             do {
@@ -77,7 +77,7 @@ public class AccountService implements IAccountService {
         } catch (Exception e) {
             auditLogRepository.save(new AuditLog(
                     "ACCOUNT_CREATION_FAILURE",
-                    "Failed for email: " + accountRequest.getOwnerEmail() + " Error: " + e.getMessage(),
+                    "Failed for email: " + ownerEmail + " Error: " + e.getMessage(),
                     "FAILURE"
             ));
             logger.error("Account creation failed: {}", e.getMessage());
@@ -86,7 +86,7 @@ public class AccountService implements IAccountService {
     }
 
     @Transactional
-    public void transferMoney(TransferRequest request, String idempotencyKey) {
+    public void transferMoney(TransferRequest request, String idempotencyKey, String ownerEmail) {
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
             if (idempotencyRecordRepository.existsById(idempotencyKey)) {
                 logger.info("Duplicate transfer request detected for Idempotency-Key: {}", idempotencyKey);
@@ -102,7 +102,7 @@ public class AccountService implements IAccountService {
             Account source = findAccountByIban(request.getFromIban());
             Account target = findAccountByIban(request.getToIban());
 
-            validateTransfer(source, request);
+            validateTransfer(source, request, ownerEmail);
 
             double amountToDebit = request.getAmount();
             double amountToCredit = calculateCreditAmount(source, target, amountToDebit);
@@ -112,7 +112,7 @@ public class AccountService implements IAccountService {
             createTransactionLogs(source, target, amountToDebit, amountToCredit);
 
             auditLogRepository.save(new AuditLog("TRANSFER_SUCCESS", logDetails, "SUCCESS"));
-            logger.info("Transfer successful for {}", request.getOwnerEmail());
+            logger.info("Transfer successful for {}", ownerEmail);
 
             if (idempotencyKey != null && !idempotencyKey.isBlank()) {
                 idempotencyRecordRepository.save(new IdempotencyRecord(idempotencyKey, LocalDateTime.now()));
@@ -130,13 +130,13 @@ public class AccountService implements IAccountService {
                 .orElseThrow(() -> new AccountNotFoundException(iban));
     }
 
-    private void validateTransfer(Account source, TransferRequest request) {
-        if (!source.getOwner().getEmail().equals(request.getOwnerEmail())) {
+    private void validateTransfer(Account source, TransferRequest request, String ownerEmail) {
+        if (!source.getOwner().getEmail().equals(ownerEmail)) {
             String warning = String.format("SECURITY ALERT: User %s tried to transfer from account owned by %s",
-                    request.getOwnerEmail(), source.getOwner().getEmail());
+                    ownerEmail, source.getOwner().getEmail());
             logger.error(warning);
             auditLogRepository.save(new AuditLog("UNAUTHORIZED_TRANSFER_ATTEMPT", warning, "CRITICAL"));
-            throw new UnauthorizedAccountAccessException(request.getOwnerEmail());
+            throw new UnauthorizedAccountAccessException(ownerEmail);
         }
 
         if (request.getAmount() <= 0) {

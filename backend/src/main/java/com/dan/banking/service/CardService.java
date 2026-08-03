@@ -29,6 +29,11 @@ public class CardService {
         return cardRepository.findByEmail(email);
     }
 
+    public Card getCardByIdAndEmail(Long cardId, String userEmail) {
+        return cardRepository.findByIdAndOwnerEmail(cardId, userEmail)
+                .orElseThrow(() -> new RuntimeException("Card not found or does not belong to current user"));
+    }
+
     @Transactional
     public Card createCard(String userEmail, String iban, String type, boolean disposable) {
         Account account = accountRepository.findByIbanAndOwnerEmail(iban, userEmail)

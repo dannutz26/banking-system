@@ -13,6 +13,4 @@ public class AccountRequest {
 
     @NotNull(message = "Currency is required")
     private Currency currency;
-
-    private String ownerEmail;
 }

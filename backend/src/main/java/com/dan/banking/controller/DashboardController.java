@@ -68,8 +68,7 @@ public class DashboardController {
     @PostMapping("/create-account")
     public ResponseEntity<String> createAccount(@Valid @RequestBody AccountRequest accountRequest, Principal principal) {
         try {
-            accountRequest.setOwnerEmail(principal.getName());
-            accountService.insertAccount(accountRequest);
+            accountService.insertAccount(accountRequest, principal.getName());
             return ResponseEntity.ok("Account created successfully!");
         } catch (RuntimeException e) {
             return ResponseEntity.status(400).body("Account creation failed: " + e.getMessage());
@@ -86,8 +85,7 @@ public class DashboardController {
                                                 @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
                                                 Principal principal) {
         try {
-            request.setOwnerEmail(principal.getName());
-            accountService.transferMoney(request, idempotencyKey);
+            accountService.transferMoney(request, idempotencyKey, principal.getName());
             return ResponseEntity.ok("Transfer completed successfully!");
         } catch (RuntimeException e) {
             return ResponseEntity.status(400).body(e.getMessage());
@@ -144,6 +142,15 @@ public class DashboardController {
                 card.isDisposable(),
                 card.getAccountId()
         );
+    }
+
+    @PostMapping("/cards/{id}/reveal")
+    public ResponseEntity<Map<String, String>> revealCard(@PathVariable Long id, Principal principal) {
+        Card card = cardService.getCardByIdAndEmail(id, principal.getName());
+        return ResponseEntity.ok(Map.of(
+                "cardNumber", card.getCardNumber(),
+                "cvv", card.getCvv() != null ? card.getCvv() : ""
+        ));
     }
 
     @PostMapping("/cards/toggle-block")
