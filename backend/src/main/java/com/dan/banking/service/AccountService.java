@@ -12,6 +12,9 @@ import com.dan.banking.repository.AccountRepository;
 import com.dan.banking.repository.AuditLogRepository;
 import com.dan.banking.repository.TransactionRepository;
 import com.dan.banking.repository.UserRepository;
+import com.dan.banking.repository.CardRepository;
+import com.dan.banking.repository.IdempotencyRecordRepository;
+import com.dan.banking.entity.IdempotencyRecord;
 import com.dan.banking.utility.IbanGenerator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +40,8 @@ public class AccountService implements IAccountService {
     private final AuditLogRepository auditLogRepository;
     private static final Logger logger = LoggerFactory.getLogger(AccountService.class);
     private final SpendingLimitService spendingLimitService;
+    private final CardRepository cardRepository;
+    private final IdempotencyRecordRepository idempotencyRecordRepository;
 
     public List<Account> getAccounts(String email) {
         logger.debug("Fetching accounts for user: {}", email);
@@ -81,7 +86,14 @@ public class AccountService implements IAccountService {
     }
 
     @Transactional
-    public void transferMoney(TransferRequest request) {
+    public void transferMoney(TransferRequest request, String idempotencyKey) {
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            if (idempotencyRecordRepository.existsById(idempotencyKey)) {
+                logger.info("Duplicate transfer request detected for Idempotency-Key: {}", idempotencyKey);
+                return; // Idempotent response
+            }
+        }
+
         String logDetails = String.format("From: %s to %s | Amount: %.2f",
                 request.getFromIban(), request.getToIban(), request.getAmount());
         logger.info("Transfer attempt: {}", logDetails);
@@ -101,6 +113,10 @@ public class AccountService implements IAccountService {
 
             auditLogRepository.save(new AuditLog("TRANSFER_SUCCESS", logDetails, "SUCCESS"));
             logger.info("Transfer successful for {}", request.getOwnerEmail());
+
+            if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+                idempotencyRecordRepository.save(new IdempotencyRecord(idempotencyKey, LocalDateTime.now()));
+            }
 
         } catch (Exception e) {
             logger.error("Transfer failed: {} - Details: {}", e.getMessage(), logDetails);
@@ -130,6 +146,12 @@ public class AccountService implements IAccountService {
         if (source.getBalance() < request.getAmount()) {
             logger.warn("Transfer rejected: Insufficient funds for IBAN {}", source.getIban());
             throw new InsuficientFundsException();
+        }
+
+        Boolean hasBlockedCard = cardRepository.hasBlockedCard(source.getId());
+        if (hasBlockedCard != null && hasBlockedCard) {
+            logger.warn("Transfer rejected: Account {} has a frozen card.", source.getIban());
+            throw new CardFrozenException("Transfer blocked: The account has a frozen card.");
         }
 
         spendingLimitService.validateTransaction(source.getId(), null, BigDecimal.valueOf(request.getAmount()));

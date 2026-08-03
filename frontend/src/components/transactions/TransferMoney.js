@@ -14,7 +14,10 @@ const TransferMoney = ({ email, accounts, onCancel, onTransferSuccess, onLogout 
         e.preventDefault();
         try {
             const payload = { fromIban, toIban, amount: parseFloat(amount) };
-            await axios.post(`${API_BASE_URL}/api/dashboard/transfer`, payload);
+            const idempotencyKey = crypto.randomUUID();
+            await axios.post(`${API_BASE_URL}/api/dashboard/transfer`, payload, {
+                headers: { 'Idempotency-Key': idempotencyKey }
+            });
             setMessage("Transfer Successful!");
             setTimeout(() => onTransferSuccess(), 1500);
         } catch (error) {

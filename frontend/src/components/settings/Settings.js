@@ -1,8 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import API_BASE_URL from '../../config';
 
 const Settings = ({ email, accounts, currentPrefs, onSave, onCancel, onLogout }) => {
     const [prefCurrency, setPrefCurrency] = useState(currentPrefs.currency || 'EUR');
     const [primaryIban, setPrimaryIban] = useState(currentPrefs.primaryIban || '');
+    const [currencies, setCurrencies] = useState([]);
+
+    useEffect(() => {
+        const fetchCurrencies = async () => {
+            try {
+                const res = await axios.get(`${API_BASE_URL}/api/dashboard/currencies`);
+                setCurrencies(res.data);
+            } catch (err) {
+                console.error("Error fetching currencies:", err);
+            }
+        };
+        fetchCurrencies();
+    }, []);
 
     return (
         <div className="dashboard-container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -36,10 +51,13 @@ const Settings = ({ email, accounts, currentPrefs, onSave, onCancel, onLogout })
                             onChange={(e) => setPrefCurrency(e.target.value)}
                             style={{ width: '100%' }}
                         >
-                            <option value="EUR">EUR (€)</option>
-                            <option value="RON">RON (lei)</option>
-                            <option value="USD">USD ($)</option>
-                            <option value="YER">YER (﷼)</option>
+                            {currencies.length > 0 ? (
+                                currencies.map(c => (
+                                    <option key={c.code} value={c.code}>{c.code}</option>
+                                ))
+                            ) : (
+                                <option value="EUR">EUR</option>
+                            )}
                         </select>
                     </div>
 

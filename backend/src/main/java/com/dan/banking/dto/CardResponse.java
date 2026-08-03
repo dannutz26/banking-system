@@ -9,7 +9,6 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class CardResponse {
     private Long id;
-    private String cardNumber;
     private String maskedCardNumber;
     private String cardHolderName;
     private LocalDate expiryDate;

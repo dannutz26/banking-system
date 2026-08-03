@@ -21,7 +21,7 @@ function App() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const token = localStorage.getItem(AUTH_TOKEN_KEY);
+        const token = sessionStorage.getItem(AUTH_TOKEN_KEY);
         if (token) {
             setAuthHeader(token);
         }
@@ -34,7 +34,7 @@ function App() {
                     setView('dashboard');
                 }
             } catch (err) {
-                localStorage.removeItem(AUTH_TOKEN_KEY);
+                sessionStorage.removeItem(AUTH_TOKEN_KEY);
                 setAuthHeader(null);
                 setView('login');
             } finally {
@@ -46,7 +46,7 @@ function App() {
     }, []);
 
     const handleLoginSuccess = ({ email, token }) => {
-        localStorage.setItem(AUTH_TOKEN_KEY, token);
+        sessionStorage.setItem(AUTH_TOKEN_KEY, token);
         setAuthHeader(token);
         setUser({ email });
         setView('dashboard');
@@ -58,7 +58,7 @@ function App() {
         } catch (err) {
             console.error("Logout error:", err);
         } finally {
-            localStorage.removeItem(AUTH_TOKEN_KEY);
+            sessionStorage.removeItem(AUTH_TOKEN_KEY);
             setAuthHeader(null);
             setUser(null);
             setView('login');

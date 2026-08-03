@@ -33,7 +33,9 @@ public class DashboardController {
         UserSettings settings = user.getSettings();
         List<Account> accounts = accountService.getAccounts(email);
 
-        String targetCurrency = (settings != null) ? settings.getPreferredCurrency() : "EUR";
+        String targetCurrency = (settings != null && settings.getPreferredCurrency() != null && !settings.getPreferredCurrency().isEmpty()) 
+                ? settings.getPreferredCurrency() 
+                : "EUR";
         double totalNetWorth = accounts.stream()
                 .mapToDouble(acc -> {
                     if (acc.getCurrency().equals(targetCurrency)) {
@@ -76,23 +78,16 @@ public class DashboardController {
 
     @GetMapping("/currencies")
     public ResponseEntity<List<Map<String, String>>> getAvailableCurrencies() {
-        List<Map<String, String>> currencies = Currency.getAvailableCurrencies().stream()
-                .map(c -> {
-                    Map<String, String> map = new HashMap<>();
-                    map.put("code", c.getCurrencyCode());
-                    map.put("name", c.getDisplayName());
-                    return map;
-                })
-                .sorted((a, b) -> a.get("code").compareTo(b.get("code")))
-                .toList();
-        return ResponseEntity.ok(currencies);
+        return ResponseEntity.ok(currencyService.getAvailableCurrencies());
     }
 
     @PostMapping("/transfer")
-    public ResponseEntity<String> transferMoney(@Valid @RequestBody TransferRequest request, Principal principal) {
+    public ResponseEntity<String> transferMoney(@Valid @RequestBody TransferRequest request, 
+                                                @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
+                                                Principal principal) {
         try {
             request.setOwnerEmail(principal.getName());
-            accountService.transferMoney(request);
+            accountService.transferMoney(request, idempotencyKey);
             return ResponseEntity.ok("Transfer completed successfully!");
         } catch (RuntimeException e) {
             return ResponseEntity.status(400).body(e.getMessage());
@@ -100,9 +95,13 @@ public class DashboardController {
     }
 
     @GetMapping("/transactions")
-    public ResponseEntity<List<Transaction>> getTransactions(Principal principal) {
+    public ResponseEntity<List<TransactionResponse>> getTransactions(Principal principal) {
         String email = principal.getName();
-        return ResponseEntity.ok(accountService.getAllTransactionsForUser(email));
+        List<Transaction> transactions = accountService.getAllTransactionsForUser(email);
+        List<TransactionResponse> response = transactions.stream()
+                .map(t -> new TransactionResponse(t.getId(), t.getSourceIban(), t.getTargetIban(), t.getAmount(), t.getCurrency(), t.getDescription(), t.getTimestamp()))
+                .toList();
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/deposit")
@@ -137,7 +136,6 @@ public class DashboardController {
         }
         return new CardResponse(
                 card.getId(),
-                fullNumber,
                 maskedNumber,
                 card.getCardHolderName(),
                 card.getExpiryDate(),

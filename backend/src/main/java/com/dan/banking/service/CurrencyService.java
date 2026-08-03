@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -31,6 +32,11 @@ public class CurrencyService {
         String fromBase = from.toUpperCase();
         String toTarget = to.toUpperCase();
         logger.info("Calculating exchange rate: {} -> {}", fromBase, toTarget);
+
+        if (shouldRefreshCache(fromBase, toTarget)) {
+            logger.info("Rates are stale or missing, refreshing from API...");
+            refreshAllRatesFromAPI();
+        }
 
         double rateFrom = getRateFromDb(fromBase);
         double rateTo = getRateFromDb(toTarget);
@@ -57,6 +63,13 @@ public class CurrencyService {
         return rateRepository.findByToCurrency(code)
                 .map(ExchangeRate::getRate)
                 .orElse(1.0);
+    }
+
+    public List<Map<String, String>> getAvailableCurrencies() {
+        return rateRepository.findAll().stream()
+                .map(r -> Map.of("code", r.getToCurrency(), "name", r.getToCurrency()))
+                .sorted((a, b) -> a.get("code").compareTo(b.get("code")))
+                .toList();
     }
 
     @SuppressWarnings("unchecked")
